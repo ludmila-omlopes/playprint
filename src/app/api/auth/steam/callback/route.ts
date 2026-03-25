@@ -1,0 +1,57 @@
+﻿import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getSessionUserId, setUserSession } from "@/lib/session";
+import {
+  createSteamPlaceholderUserName,
+  upsertSteamAccountForUser,
+  verifySteamOpenIdCallback,
+} from "@/lib/steam";
+
+export async function GET(request: Request) {
+  try {
+    const url = new URL(request.url);
+    const steamId = await verifySteamOpenIdCallback(url.searchParams);
+    const existingSessionUserId = await getSessionUserId();
+
+    const existingSteamAccount = await prisma.externalAccount.findUnique({
+      where: {
+        provider_providerAccountId: {
+          provider: "STEAM",
+          providerAccountId: steamId,
+        },
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    let user = existingSessionUserId
+      ? await prisma.user.findUnique({ where: { id: existingSessionUserId } })
+      : existingSteamAccount?.user ?? null;
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          displayName: createSteamPlaceholderUserName(steamId),
+        },
+      });
+    }
+
+    await upsertSteamAccountForUser({
+      userId: user.id,
+      steamId,
+    });
+
+    await setUserSession(user.id);
+
+    return NextResponse.redirect(
+      new URL("/profile?connected=steam", request.url),
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Could not connect Steam.";
+    return NextResponse.redirect(
+      new URL(`/profile?error=${encodeURIComponent(message)}`, request.url),
+    );
+  }
+}

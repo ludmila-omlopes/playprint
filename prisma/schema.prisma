@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum ExternalProvider {
+  STEAM
+  IGDB
+}
+
+enum UserGameStatus {
+  OWNED
+  WISHLIST
+  PLAYING
+  BACKLOG
+  COMPLETED
+}
+
+enum EntrySource {
+  STEAM
+  CSV
+  MANUAL
+}
+
+enum ImportJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ImportRowStatus {
+  IMPORTED
+  SKIPPED
+  FAILED
+}
+
+model User {
+  id               String            @id @default(cuid())
+  displayName      String?
+  avatarUrl        String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  externalAccounts ExternalAccount[]
+  gameEntries      UserGameEntry[]
+  importJobs       ImportJob[]
+}
+
+model ExternalAccount {
+  id                String           @id @default(cuid())
+  userId            String
+  provider          ExternalProvider
+  providerAccountId String
+  username          String?
+  displayName       String?
+  avatarUrl         String?
+  profileUrl        String?
+  metadata          Json?
+  lastSyncedAt      DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameEntries       UserGameEntry[]
+
+  @@unique([provider, providerAccountId])
+  @@index([userId, provider])
+}
+
+model Game {
+  id               String             @id @default(cuid())
+  slug             String             @unique
+  name             String
+  normalizedName   String
+  summary          String?
+  coverUrl         String?
+  heroUrl          String?
+  releaseDate      DateTime?
+  aggregatedRating Float?
+  totalRatingCount Int?
+  genres           Json?
+  platforms        Json?
+  screenshots      Json?
+  websites         Json?
+  metadataSource   ExternalProvider?
+  igdbId           Int?               @unique
+  igdbSlug         String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  providerLinks    GameProviderLink[]
+  userEntries      UserGameEntry[]
+  importRows       ImportRow[]
+
+  @@index([normalizedName])
+}
+
+model GameProviderLink {
+  id             String           @id @default(cuid())
+  gameId         String
+  provider       ExternalProvider
+  providerGameId String
+  storeUrl       String?
+  rawData        Json?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  game           Game             @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerGameId])
+  @@index([gameId])
+}
+
+model UserGameEntry {
+  id                String           @id @default(cuid())
+  userId            String
+  gameId            String
+  status            UserGameStatus
+  source            EntrySource
+  provider          ExternalProvider?
+  externalAccountId String?
+  platformName      String?
+  playtimeMinutes   Int?
+  notes             String?
+  isFavorite        Boolean          @default(false)
+  lastSyncedAt      DateTime?
+  rawData           Json?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game              Game             @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  externalAccount   ExternalAccount? @relation(fields: [externalAccountId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, gameId, status])
+  @@index([userId, status])
+}
+
+model ImportJob {
+  id            String          @id @default(cuid())
+  userId        String
+  fileName      String
+  status        ImportJobStatus @default(PENDING)
+  columnMapping Json?
+  summary       Json?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  completedAt   DateTime?
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rows          ImportRow[]
+
+  @@index([userId, createdAt])
+}
+
+model ImportRow {
+  id              String          @id @default(cuid())
+  jobId           String
+  rowIndex        Int
+  rawData         Json
+  normalizedTitle String?
+  platformName    String?
+  statusText      String?
+  playtimeMinutes Int?
+  notes           String?
+  externalId      String?
+  outcome         ImportRowStatus?
+  error           String?
+  matchedGameId   String?
+  createdAt       DateTime        @default(now())
+  job             ImportJob       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  matchedGame     Game?           @relation(fields: [matchedGameId], references: [id], onDelete: SetNull)
+
+  @@index([jobId, rowIndex])
+}
