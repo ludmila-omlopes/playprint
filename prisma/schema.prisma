@@ -39,6 +39,29 @@ enum ImportRowStatus {
   FAILED
 }
 
+enum BacklogFriction {
+  CHOICE_OVERLOAD
+  TIME_COMMITMENT
+  GENRE_FATIGUE
+  LOW_CONFIDENCE_MATCH
+  TOO_MANY_SIMILAR_GAMES
+  STALE_SESSION
+  COMPLETION_PRESSURE
+  TECHNICAL_OR_PLATFORM_FRICTION
+  UNKNOWN
+}
+
+enum AssistantSignalType {
+  UNTOUCHED
+  SAMPLED_DROPPED
+  STALE_PLAYING
+  FINISHABLE_SOON
+  WISHLIST_RISK
+  BUY_RISK
+  RETURN_CANDIDATE
+  RELEASE_CANDIDATE
+}
+
 model User {
   id               String            @id @default(cuid())
   displayName      String?
@@ -48,6 +71,8 @@ model User {
   externalAccounts ExternalAccount[]
   gameEntries      UserGameEntry[]
   importJobs       ImportJob[]
+  gameInsights     UserGameInsight[]
+  assistantRuns    AssistantRun[]
 }
 
 model ExternalAccount {
@@ -122,8 +147,16 @@ model UserGameEntry {
   externalAccountId String?
   platformName      String?
   playtimeMinutes   Int?
+  lastPlayedAt      DateTime?
+  completionPercent Int?
   notes             String?
   isFavorite        Boolean          @default(false)
+  startedAt         DateTime?
+  abandonedAt       DateTime?
+  abandonReason     String?
+  activeBacklog     Boolean          @default(true)
+  userIntent        String?
+  desiredSessionMin Int?
   lastSyncedAt      DateTime?
   rawData           Json?
   createdAt         DateTime         @default(now())
@@ -131,9 +164,45 @@ model UserGameEntry {
   user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   game              Game             @relation(fields: [gameId], references: [id], onDelete: Cascade)
   externalAccount   ExternalAccount? @relation(fields: [externalAccountId], references: [id], onDelete: SetNull)
+  insights          UserGameInsight[]
 
   @@unique([userId, gameId, status])
   @@index([userId, status])
+}
+
+model UserGameInsight {
+  id              String          @id @default(cuid())
+  userId          String
+  userGameEntryId String
+  signalType      AssistantSignalType
+  friction        BacklogFriction
+  score           Int
+  confidence      Int
+  reasons         Json
+  suggestedAction String?
+  generatedBy     String          @default("rules")
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userGameEntry   UserGameEntry   @relation(fields: [userGameEntryId], references: [id], onDelete: Cascade)
+
+  @@unique([userGameEntryId, signalType])
+  @@index([userId, signalType])
+  @@index([userId, score])
+}
+
+model AssistantRun {
+  id            String   @id @default(cuid())
+  userId        String
+  inputSummary  Json
+  outputSummary Json
+  model         String?
+  status        String
+  error         String?
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 model ImportJob {
@@ -161,6 +230,7 @@ model ImportRow {
   platformName    String?
   statusText      String?
   playtimeMinutes Int?
+  completionPercent Int?
   notes           String?
   externalId      String?
   outcome         ImportRowStatus?

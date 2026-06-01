@@ -30,8 +30,26 @@ type SteamOwnedGamesResponse = {
       playtime_forever?: number;
       img_icon_url?: string;
       img_logo_url?: string;
+      rtime_last_played?: number;
     }>;
   };
+};
+
+type SteamPlayerAchievementsResponse = {
+  playerstats?: {
+    success?: boolean;
+    achievements?: Array<{
+      apiname: string;
+      achieved: number;
+    }>;
+  };
+};
+
+type SteamAchievementCompletion = {
+  completionPercent: number | null;
+  unlockedAchievements: number;
+  totalAchievements: number;
+  reason: "available" | "no-achievements" | "unavailable";
 };
 
 function getSteamApiKey() {
@@ -170,21 +188,132 @@ async function fetchSteamOwnedGames(
   }
 
   const data = (await response.json()) as SteamOwnedGamesResponse;
+  const games = (data.response?.games ?? []).filter((game) => game.name);
+  const achievementCompletions = await fetchSteamAchievementCompletions(
+    steamId,
+    games.map((game) => game.appid),
+  );
 
-  return (data.response?.games ?? [])
-    .filter((game) => game.name)
-    .map((game) => ({
+  return games.map((game) => {
+    const achievementCompletion = achievementCompletions.get(game.appid) ?? {
+      completionPercent: null,
+      unlockedAchievements: 0,
+      totalAchievements: 0,
+      reason: "unavailable" as const,
+    };
+
+    return {
       providerGameId: String(game.appid),
       title: game.name ?? `Steam App ${game.appid}`,
       platformName: "Steam",
       playtimeMinutes: game.playtime_forever ?? 0,
+      lastPlayedAt: parseSteamLastPlayedAt(game.rtime_last_played),
+      completionPercent: achievementCompletion.completionPercent,
       storeUrl: `https://store.steampowered.com/app/${game.appid}`,
       rawData: {
         appid: game.appid,
         iconUrl: game.img_icon_url ?? null,
         logoUrl: game.img_logo_url ?? null,
+        rtimeLastPlayed: game.rtime_last_played ?? null,
+        achievementCompletion,
       },
-    }));
+    };
+  });
+}
+
+function parseSteamLastPlayedAt(value: number | undefined) {
+  if (!value || !Number.isFinite(value)) {
+    return null;
+  }
+
+  return new Date(value * 1000);
+}
+
+async function fetchSteamAchievementCompletions(
+  steamId: string,
+  appIds: number[],
+) {
+  const completions = new Map<number, SteamAchievementCompletion>();
+  const concurrency = 6;
+
+  for (let index = 0; index < appIds.length; index += concurrency) {
+    const batch = appIds.slice(index, index + concurrency);
+    const results = await Promise.all(
+      batch.map(async (appId) => [
+        appId,
+        await fetchSteamAchievementCompletion(steamId, appId),
+      ] as const),
+    );
+
+    for (const [appId, completion] of results) {
+      completions.set(appId, completion);
+    }
+  }
+
+  return completions;
+}
+
+async function fetchSteamAchievementCompletion(
+  steamId: string,
+  appId: number,
+): Promise<SteamAchievementCompletion> {
+  const apiKey = getSteamApiKey();
+  if (!apiKey) {
+    return createUnavailableAchievementCompletion();
+  }
+
+  const url = new URL(
+    "https://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v0001/",
+  );
+  url.searchParams.set("key", apiKey);
+  url.searchParams.set("steamid", steamId);
+  url.searchParams.set("appid", String(appId));
+
+  try {
+    const response = await fetch(url, {
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return createUnavailableAchievementCompletion();
+    }
+
+    const data = (await response.json()) as SteamPlayerAchievementsResponse;
+    const achievements = data.playerstats?.achievements ?? [];
+    if (!data.playerstats?.success || achievements.length === 0) {
+      return {
+        completionPercent: null,
+        unlockedAchievements: 0,
+        totalAchievements: 0,
+        reason: "no-achievements",
+      };
+    }
+
+    const unlockedAchievements = achievements.filter(
+      (achievement) => achievement.achieved === 1,
+    ).length;
+    const completionPercent = Math.round(
+      (unlockedAchievements / achievements.length) * 100,
+    );
+
+    return {
+      completionPercent,
+      unlockedAchievements,
+      totalAchievements: achievements.length,
+      reason: "available",
+    };
+  } catch {
+    return createUnavailableAchievementCompletion();
+  }
+}
+
+function createUnavailableAchievementCompletion(): SteamAchievementCompletion {
+  return {
+    completionPercent: null,
+    unlockedAchievements: 0,
+    totalAchievements: 0,
+    reason: "unavailable",
+  };
 }
 
 export const steamAdapter: ProviderAccountAdapter = {

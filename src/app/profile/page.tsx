@@ -1,25 +1,71 @@
 import Link from "next/link";
+import { AssistantSignalType } from "@prisma/client";
 import { redirect } from "next/navigation";
+import { BacklogDiagnosis } from "@/components/assistant/backlog-diagnosis";
+import { BuyDecisionForm } from "@/components/assistant/buy-decision-form";
+import { PlayNextPanel } from "@/components/assistant/play-next-panel";
 import { CsvImportWidget } from "@/components/csv-import-widget";
 import { getProfileData } from "@/lib/catalog";
+import {
+  getAssistantProfileData,
+  getAssistantSignalEntryIds,
+} from "@/lib/assistant/queries";
 import { hasIgdbConfig } from "@/lib/igdb";
+import {
+  parseProfileGameSort,
+  sortProfileGameEntries,
+} from "@/lib/profile-games";
 import { getSessionUserId } from "@/lib/session";
 import { isSteamConfigured } from "@/lib/steam";
-import { cn, formatDate, formatNumber, formatPlaytime } from "@/lib/utils";
+import {
+  cn,
+  formatCompletionPercent,
+  formatDate,
+  formatLastPlayed,
+  formatNumber,
+  formatPlaytime,
+} from "@/lib/utils";
 import {
   importCsvAction,
   syncSteamLibraryAction,
   toggleFavoriteAction,
 } from "./actions";
+import { refreshAssistantInsightsAction } from "./assistant-actions";
 
 type ProfileSearchParams = Promise<{
   tab?: string;
   view?: string;
+  sort?: string;
+  signal?: string;
   connected?: string;
   synced?: string;
   imported?: string;
+  assistant?: string;
   error?: string;
 }>;
+
+const STEAM_COMPLETION_TOOLTIP =
+  "Steam completion is based on unlocked achievements divided by total achievements. It is unavailable for games without Steam achievements, private/blocked stats, or API failures, and may not match story completion.";
+
+function parseAssistantSignal(value: string | undefined) {
+  return Object.values(AssistantSignalType).includes(value as AssistantSignalType)
+    ? (value as AssistantSignalType)
+    : null;
+}
+
+function SteamCompletionInfoIcon() {
+  return (
+    <span
+      aria-label={STEAM_COMPLETION_TOOLTIP}
+      className="inline-grid h-4 w-4 flex-none place-items-center rounded-full border border-current text-[0.62rem] font-black leading-none opacity-70"
+      role="img"
+      tabIndex={0}
+      title={STEAM_COMPLETION_TOOLTIP}
+    >
+      i
+    </span>
+  );
+}
 
 export default async function ProfilePage({
   searchParams,
@@ -56,8 +102,27 @@ export default async function ProfilePage({
   }
 
   const query = await searchParams;
-  const activeTab = query.tab === "games" ? "games" : "overview";
+  const activeTab =
+    query.tab === "games"
+      ? "games"
+      : query.tab === "assistant" || query.tab === "coach"
+        ? "assistant"
+        : "overview";
+  const assistant =
+    activeTab === "assistant" ? await getAssistantProfileData(userId) : null;
+  const activeSignal = parseAssistantSignal(query.signal);
+  const signalEntryIds =
+    activeTab === "games" && activeSignal
+      ? await getAssistantSignalEntryIds(userId, activeSignal)
+      : null;
   const gamesView = query.view === "grid" ? "grid" : "list";
+  const gamesSort = parseProfileGameSort(query.sort);
+  const gameEntries = sortProfileGameEntries(
+    [...profile.ownedEntries, ...profile.wishlistEntries].filter((entry) =>
+      signalEntryIds ? signalEntryIds.has(entry.id) : true,
+    ),
+    gamesSort,
+  );
 
   const statusMessage = query.error
     ? { tone: "error" as const, message: query.error }
@@ -77,7 +142,12 @@ export default async function ProfilePage({
               message:
                 "Steam account connected. Run a sync to pull the library.",
             }
-          : null;
+          : query.assistant
+            ? {
+                tone: "success" as const,
+                message: `Assistant refreshed. ${query.assistant} insights updated.`,
+              }
+            : null;
 
   return (
     <main id="main-content" className="w-full max-w-[1200px] mx-auto grid gap-6">
@@ -177,6 +247,22 @@ export default async function ProfilePage({
           <span className="ml-1.5 text-xs opacity-70">
             {profile.ownedEntries.length + profile.wishlistEntries.length}
           </span>
+        </Link>
+        <Link
+          href="/profile?tab=assistant"
+          className={cn(
+            "px-5 py-2.5 border-3 border-ink rounded-pill font-bold text-sm uppercase tracking-wide transition-all duration-150",
+            activeTab === "assistant"
+              ? "bg-ink text-white shadow-hard-xs"
+              : "bg-paper/80 hover:bg-paper shadow-[2px_2px_0_rgba(21,21,21,0.12)] hover:shadow-hard-xs hover:-translate-y-0.5",
+          )}
+        >
+          Assistant
+          {assistant ? (
+            <span className="ml-1.5 text-xs opacity-70">
+              {assistant.insights.length}
+            </span>
+          ) : null}
         </Link>
       </nav>
 
@@ -343,65 +429,168 @@ export default async function ProfilePage({
       {/* ══════════════════════════════════════════════ */}
       {/* ── GAMES TAB ── */}
       {/* ══════════════════════════════════════════════ */}
+      {activeTab === "assistant" && assistant ? (
+        <>
+          <section className="flex items-center justify-between gap-4 border-3 border-ink rounded-[22px] bg-cyan/30 px-5 py-4 shadow-hard-xs max-md:flex-col max-md:items-start">
+            <div>
+              <p className="section-label !mb-1">Decision assistant</p>
+              <p className="text-sm font-bold leading-snug">
+                Refresh insights after Steam syncs, CSV imports, or status changes.
+              </p>
+              <p className="mt-1 text-xs text-ink/65">
+                AI explanations are optional. Rule-based scoring works without an API key.
+              </p>
+            </div>
+            <form action={refreshAssistantInsightsAction}>
+              <button className="btn btn-primary" type="submit">
+                Refresh assistant
+              </button>
+            </form>
+          </section>
+
+          <BacklogDiagnosis assistant={assistant} />
+          <PlayNextPanel assistant={assistant} />
+
+          <section className="panel">
+            <div className="mb-[22px]">
+              <span className="section-label">Buy decision helper</span>
+              <h2 className="text-[clamp(1.5rem,3vw,2.2rem)] leading-[1.05]">
+                Buy, wait, wishlist, or skip
+              </h2>
+            </div>
+            <BuyDecisionForm />
+          </section>
+        </>
+      ) : null}
+
       {activeTab === "games" ? (
         <>
           {/* View toggle toolbar */}
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-ink/60">
-              {profile.ownedEntries.length + profile.wishlistEntries.length} games
-            </p>
-            <div className="flex border-3 border-ink rounded-[14px] overflow-hidden">
-              <Link
-                href="/profile?tab=games&view=list"
-                className={cn(
-                  "px-3 py-1.5 grid place-items-center transition-colors",
-                  gamesView === "list"
-                    ? "bg-ink text-white"
-                    : "bg-paper/80 hover:bg-paper",
-                )}
-                aria-label="List view"
-                title="List view"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4.5 h-4.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 5.25h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5" />
-                </svg>
-              </Link>
-              <Link
-                href="/profile?tab=games&view=grid"
-                className={cn(
-                  "px-3 py-1.5 grid place-items-center transition-colors border-l-3 border-ink",
-                  gamesView === "grid"
-                    ? "bg-ink text-white"
-                    : "bg-paper/80 hover:bg-paper",
-                )}
-                aria-label="Grid view"
-                title="Grid view"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4.5 h-4.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-                </svg>
-              </Link>
+          <div className="flex items-center justify-between gap-3 max-md:flex-col max-md:items-start">
+            <div>
+              <p className="text-sm text-ink/60">
+                {gameEntries.length} games
+                {activeSignal ? ` matching ${activeSignal.toLowerCase()}` : ""}
+              </p>
+              {activeSignal ? (
+                <Link
+                  className="nav-link text-xs"
+                  href="/profile?tab=games&view=list"
+                >
+                  Clear assistant filter
+                </Link>
+              ) : null}
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex border-3 border-ink rounded-[14px] overflow-hidden">
+                {[
+                  ["added", "Newest"],
+                  ["playtime", "Playtime"],
+                  ["title", "Title"],
+                ].map(([sort, label]) => (
+                  <Link
+                    href={`/profile?tab=games&view=${gamesView}&sort=${sort}${
+                      activeSignal ? `&signal=${activeSignal}` : ""
+                    }`}
+                    className={cn(
+                      "px-3 py-1.5 border-l-3 first:border-l-0 border-ink text-xs font-bold uppercase tracking-wide transition-colors",
+                      gamesSort === sort
+                        ? "bg-ink text-white"
+                        : "bg-paper/80 hover:bg-paper",
+                    )}
+                    key={sort}
+                  >
+                    {label}
+                  </Link>
+                ))}
+              </div>
+              <div className="flex border-3 border-ink rounded-[14px] overflow-hidden">
+                <Link
+                  href={`/profile?tab=games&view=list&sort=${gamesSort}${
+                    activeSignal ? `&signal=${activeSignal}` : ""
+                  }`}
+                  className={cn(
+                    "px-3 py-1.5 grid place-items-center transition-colors",
+                    gamesView === "list"
+                      ? "bg-ink text-white"
+                      : "bg-paper/80 hover:bg-paper",
+                  )}
+                  aria-label="List view"
+                  title="List view"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4.5 h-4.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 5.25h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5" />
+                  </svg>
+                </Link>
+                <Link
+                  href={`/profile?tab=games&view=grid&sort=${gamesSort}${
+                    activeSignal ? `&signal=${activeSignal}` : ""
+                  }`}
+                  className={cn(
+                    "px-3 py-1.5 grid place-items-center transition-colors border-l-3 border-ink",
+                    gamesView === "grid"
+                      ? "bg-ink text-white"
+                      : "bg-paper/80 hover:bg-paper",
+                  )}
+                  aria-label="Grid view"
+                  title="Grid view"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4.5 h-4.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                  </svg>
+                </Link>
+              </div>
             </div>
           </div>
+
+          <section className="flex items-center justify-between gap-4 border-3 border-ink rounded-[22px] bg-yellow/35 px-5 py-4 shadow-hard-xs max-md:flex-col max-md:items-start">
+            <div>
+              <p className="section-label !mb-1">Sync reminder</p>
+              <p className="text-sm font-bold leading-snug">
+                Steam playtime, last played, and completion only refresh after
+                a library sync.
+              </p>
+              <p className="mt-1 text-xs text-ink/65">
+                Last sync:{" "}
+                {profile.steamAccount?.lastSyncedAt
+                  ? formatDate(profile.steamAccount.lastSyncedAt)
+                  : "not synced yet"}
+              </p>
+            </div>
+            {profile.steamAccount ? (
+              <form action={syncSteamLibraryAction}>
+                <button className="btn btn-primary" type="submit">
+                  Sync Steam library
+                </button>
+              </form>
+            ) : (
+              <a className="btn btn-primary" href="/api/auth/steam">
+                Connect Steam
+              </a>
+            )}
+          </section>
 
           {/* ── List View ── */}
           {gamesView === "list" ? (
             <section className="panel !p-0 overflow-hidden">
               {/* Table header */}
-              <div className="grid grid-cols-[1fr_minmax(0,0.5fr)_minmax(0,0.5fr)_minmax(0,0.4fr)_44px] gap-3 px-5 py-3 bg-ink text-white text-[0.72rem] font-bold uppercase tracking-widest max-md:grid-cols-[1fr_minmax(0,0.5fr)_44px] max-md:gap-2">
+              <div className="grid grid-cols-[1fr_minmax(0,0.38fr)_minmax(0,0.36fr)_minmax(0,0.4fr)_minmax(0,0.46fr)_minmax(0,0.42fr)_44px] gap-3 px-5 py-3 bg-ink text-white text-[0.72rem] font-bold uppercase tracking-widest max-md:grid-cols-[1fr_minmax(0,0.5fr)_44px] max-md:gap-2">
                 <span>Title</span>
                 <span>Platform</span>
                 <span className="max-md:hidden">Status</span>
                 <span className="max-md:hidden">Playtime</span>
+                <span className="max-md:hidden">Last played</span>
+                <span className="max-md:hidden">Completion</span>
                 <span className="sr-only">Favorite</span>
               </div>
 
-              {profile.ownedEntries.length || profile.wishlistEntries.length ? (
+              {gameEntries.length ? (
                 <div className="divide-y divide-ink/10">
-                  {[...profile.ownedEntries, ...profile.wishlistEntries].map(
+                  {gameEntries.map(
                     (entry) => (
                       <div
-                        className="grid grid-cols-[1fr_minmax(0,0.5fr)_minmax(0,0.5fr)_minmax(0,0.4fr)_44px] gap-3 px-5 py-2.5 items-center hover:bg-yellow/10 transition-colors max-md:grid-cols-[1fr_minmax(0,0.5fr)_44px] max-md:gap-2"
+                        className="grid scroll-mt-6 grid-cols-[1fr_minmax(0,0.38fr)_minmax(0,0.36fr)_minmax(0,0.4fr)_minmax(0,0.46fr)_minmax(0,0.42fr)_44px] gap-3 px-5 py-2.5 items-center hover:bg-yellow/10 target:bg-cyan/20 transition-colors max-md:grid-cols-[1fr_minmax(0,0.5fr)_44px] max-md:gap-2"
+                        id={`entry-${entry.id}`}
                         key={`list-${entry.id}`}
                       >
                         <Link
@@ -454,6 +643,19 @@ export default async function ProfilePage({
                           {formatPlaytime(entry.playtimeMinutes)}
                         </span>
 
+                        <span className="text-xs text-ink/60 max-md:hidden">
+                          {formatLastPlayed(entry.lastPlayedAt)}
+                        </span>
+
+                        <span className="text-xs text-ink/60 max-md:hidden">
+                          <span className="flex items-center gap-1.5">
+                            {formatCompletionPercent(entry.completionPercent)}
+                            {entry.provider === "STEAM" ? (
+                              <SteamCompletionInfoIcon />
+                            ) : null}
+                          </span>
+                        </span>
+
                         <form action={toggleFavoriteAction}>
                           <input type="hidden" name="entryId" value={entry.id} />
                           <button
@@ -499,12 +701,13 @@ export default async function ProfilePage({
           {/* ── Grid View ── */}
           {gamesView === "grid" ? (
             <section>
-              {profile.ownedEntries.length || profile.wishlistEntries.length ? (
+              {gameEntries.length ? (
                 <div className="grid grid-cols-5 gap-4 max-lg:grid-cols-4 max-md:grid-cols-3 max-sm:grid-cols-2">
-                  {[...profile.ownedEntries, ...profile.wishlistEntries].map(
+                  {gameEntries.map(
                     (entry) => (
                       <div
-                        className="group relative rounded-[20px] overflow-hidden border-3 border-ink bg-white shadow-hard-sm hover:shadow-hard hover:-translate-y-1.5 transition-all duration-200"
+                        className="group relative scroll-mt-6 rounded-[20px] overflow-hidden border-3 border-ink bg-white shadow-hard-sm target:bg-cyan/20 hover:shadow-hard hover:-translate-y-1.5 transition-all duration-200"
+                        id={`entry-${entry.id}`}
                         key={`grid-${entry.id}`}
                       >
                         {/* Cover art */}
@@ -528,7 +731,7 @@ export default async function ProfilePage({
                             <h3 className="font-bold text-sm text-white leading-snug line-clamp-2">
                               {entry.game.name}
                             </h3>
-                            <div className="flex items-center gap-2 mt-1.5">
+                            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                               <span
                                 className={cn(
                                   "inline-block px-2 py-px rounded-full text-[0.6rem] font-bold uppercase tracking-wide",
@@ -544,6 +747,24 @@ export default async function ProfilePage({
                               {entry.playtimeMinutes && entry.playtimeMinutes > 0 ? (
                                 <span className="text-[0.65rem] text-white/70">
                                   {formatPlaytime(entry.playtimeMinutes)}
+                                </span>
+                              ) : null}
+                              {entry.lastPlayedAt ? (
+                                <span className="text-[0.65rem] text-white/70">
+                                  {formatLastPlayed(entry.lastPlayedAt)}
+                                </span>
+                              ) : null}
+                              {entry.completionPercent != null ? (
+                                <span className="flex items-center gap-1 text-[0.65rem] text-white/70">
+                                  {entry.completionPercent}% complete
+                                  {entry.provider === "STEAM" ? (
+                                    <SteamCompletionInfoIcon />
+                                  ) : null}
+                                </span>
+                              ) : entry.provider === "STEAM" ? (
+                                <span className="flex items-center gap-1 text-[0.65rem] text-white/70">
+                                  Not tracked
+                                  <SteamCompletionInfoIcon />
                                 </span>
                               ) : null}
                             </div>

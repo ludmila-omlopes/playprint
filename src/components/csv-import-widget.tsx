@@ -8,6 +8,7 @@ type ColumnMapping = {
   platform: string;
   status: string;
   playtimeHours: string;
+  completionPercent: string;
   notes: string;
   externalId: string;
 };
@@ -21,6 +22,7 @@ const fieldOptions: Array<{
   { key: "platform", label: "Platform" },
   { key: "status", label: "Status" },
   { key: "playtimeHours", label: "Hours Played" },
+  { key: "completionPercent", label: "Completion %" },
   { key: "notes", label: "Notes" },
   { key: "externalId", label: "External ID" },
 ];
@@ -39,6 +41,7 @@ function createInitialMapping(headers: string[]): ColumnMapping {
     platform: findHeader(["platform", "store"]),
     status: findHeader(["status", "state"]),
     playtimeHours: findHeader(["hours", "playtime"]),
+    completionPercent: findHeader(["completion", "complete", "progress", "%"]),
     notes: findHeader(["note", "review", "comment"]),
     externalId: findHeader(["id", "appid"]),
   };
@@ -58,6 +61,7 @@ export function CsvImportWidget({
     platform: "",
     status: "",
     playtimeHours: "",
+    completionPercent: "",
     notes: "",
     externalId: "",
   });
@@ -76,6 +80,9 @@ export function CsvImportWidget({
         status: mapping.status ? row[mapping.status] ?? "" : "owned",
         playtimeHours: mapping.playtimeHours
           ? row[mapping.playtimeHours] ?? ""
+          : "",
+        completionPercent: mapping.completionPercent
+          ? row[mapping.completionPercent] ?? ""
           : "",
       }))
       .filter((row) => row.title.trim().length > 0);
@@ -177,13 +184,14 @@ export function CsvImportWidget({
             {previewRows.length ? (
               previewRows.map((row, index) => (
                 <div
-                  className="grid grid-cols-[minmax(0,1.3fr)_repeat(3,minmax(0,1fr))] items-center gap-3.5 border-3 border-ink rounded-[24px] p-5 bg-white shadow-hard-sm"
+                  className="grid grid-cols-[minmax(0,1.3fr)_repeat(4,minmax(0,1fr))] items-center gap-3.5 border-3 border-ink rounded-[24px] p-5 bg-white shadow-hard-sm max-md:grid-cols-2"
                   key={`${row.title}-${index}`}
                 >
                   <strong>{row.title}</strong>
                   <span>{row.platform || "Unknown platform"}</span>
                   <span>{row.status || "owned"}</span>
                   <span>{row.playtimeHours || "0"}h</span>
+                  <span>{row.completionPercent || "Not tracked"}</span>
                 </div>
               ))
             ) : (

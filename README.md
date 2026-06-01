@@ -6,6 +6,7 @@ It is designed around a canonical local game catalog that can absorb data from m
 - Steam account sign-in and owned library sync
 - CSV imports for backlog and wishlist exports
 - IGDB metadata enrichment for covers, release dates, platforms, screenshots, and ratings
+- Optional rule-based and AI-assisted backlog assistance
 
 The current app already includes a landing page, a collector profile, Steam authentication, Steam sync, CSV mapping/import, and per-game catalog pages.
 
@@ -24,7 +25,9 @@ The app is centered on a canonical `Game` record.
 
 - `Game` stores the normalized catalog entry and any IGDB metadata
 - `GameProviderLink` links a canonical game to an external provider ID like a Steam app ID
-- `UserGameEntry` stores user ownership or wishlist state for a game
+- `UserGameEntry` stores user ownership, wishlist state, playtime, last played date, and completion percentage for a game
+- `UserGameInsight` stores per-game assistant signals such as untouched, sampled-dropped, wishlist risk, and release candidates
+- `AssistantRun` stores each assistant refresh summary and optional AI output metadata
 - `ExternalAccount` stores connected provider accounts like Steam
 - `ImportJob` and `ImportRow` keep an audit trail of CSV imports
 
@@ -33,11 +36,12 @@ This means multiple providers can eventually point to the same internal game ins
 ## Features
 
 - Steam OpenID sign-in
-- Steam owned games sync
-- CSV upload with in-browser column mapping
+- Steam owned games sync with playtime, last played date, and achievement-based completion percentages when Steam exposes the data
+- CSV upload with in-browser column mapping for titles, status, playtime, completion percentage, notes, and external IDs
 - IGDB best-match enrichment during imports and sync
 - Collector profile page with owned and wishlist sections
 - Canonical game detail pages
+- Assistant tab with backlog friction insights, play-next picks, release candidates, and buy-decision guidance
 
 ## Requirements
 
@@ -64,6 +68,10 @@ STEAM_API_KEY=""
 # IGDB / Twitch
 IGDB_CLIENT_ID=""
 IGDB_CLIENT_SECRET=""
+
+# Optional AI assistant
+OPENAI_API_KEY=""
+OPENAI_MODEL="gpt-5.4-mini"
 ```
 
 Notes:
@@ -71,6 +79,7 @@ Notes:
 - `AUTH_SECRET` should be a long random string in any non-local environment.
 - `STEAM_API_KEY` is required for owned library sync. Steam sign-in itself uses OpenID.
 - IGDB enrichment is optional. If IGDB credentials are missing, the app still works, but imported/synced games stay with local metadata only.
+- The Assistant tab works without AI. If `OPENAI_API_KEY` is set, the app can use OpenAI's Responses API to turn rule-based insights into short explanations. Only library summaries, selected game metadata, and rule outputs are sent.
 
 ## Getting Started
 
@@ -155,6 +164,16 @@ Whenever a game comes from Steam or CSV:
 4. It creates or updates the canonical `Game`.
 5. It stores the user-facing entry in `UserGameEntry`.
 
+Steam sync stores `lastPlayedAt` from Steam's `rtime_last_played` field when Steam returns it. It also tries to calculate `completionPercent` from achievements by comparing unlocked achievements to the total achievements returned for each app. Both are best-effort: games without last-played data or Steam achievements, private or blocked stats, and temporary API failures are left untracked.
+
+### Assistant flow
+
+1. The user opens `/profile?tab=assistant`.
+2. A server action refreshes deterministic insights from `UserGameEntry` data such as status, playtime, last played date, completion, favorites, and genres.
+3. Insights are stored in `UserGameInsight`; each `AssistantRun` keeps a compact audit trail of the input summary and output summary.
+4. If OpenAI credentials are configured, the app asks for a structured explanation. If the request fails or credentials are missing, deterministic fallback text is used.
+5. The buy-decision helper compares a candidate title against owned/wishlist/backlog patterns and returns buy, wait, wishlist, or skip guidance.
+
 ## Project Structure
 
 ```text
@@ -168,6 +187,7 @@ src/
     sign-out-form.tsx         Session clear action
   lib/
     catalog.ts                Catalog resolution, sync, import logic
+    assistant/                    Backlog scoring, AI summaries, and buy decisions
     igdb.ts                   IGDB auth, search, and ranking
     prisma.ts                 Prisma client singleton
     session.ts                Signed cookie session helpers

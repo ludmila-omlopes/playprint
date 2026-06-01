@@ -46,6 +46,22 @@ export function formatPlaytime(minutes: number | null | undefined) {
   return `${Math.round(hours)}h played`;
 }
 
+export function formatCompletionPercent(value: number | null | undefined) {
+  if (value === null || value === undefined) {
+    return "Not tracked";
+  }
+
+  return `${value}% complete`;
+}
+
+export function formatLastPlayed(date: Date | null | undefined) {
+  if (!date) {
+    return "Never played";
+  }
+
+  return `Last played ${formatDate(date)}`;
+}
+
 export function formatDate(date: Date | null | undefined) {
   if (!date) {
     return "TBA";

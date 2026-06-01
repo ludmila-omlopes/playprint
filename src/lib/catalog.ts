@@ -26,6 +26,7 @@ export type CsvColumnMapping = {
   platform?: string;
   status?: string;
   playtimeHours?: string;
+  completionPercent?: string;
   notes?: string;
   externalId?: string;
 };
@@ -35,6 +36,7 @@ type NormalizedImportRow = {
   platformName?: string | null;
   status: UserGameStatus;
   playtimeMinutes?: number | null;
+  completionPercent?: number | null;
   notes?: string | null;
   externalId?: string | null;
   rawData: Record<string, unknown>;
@@ -286,6 +288,8 @@ export async function syncSteamLibraryForUser(userId: string) {
         externalAccountId: steamAccount.id,
         platformName: syncedGame.platformName ?? undefined,
         playtimeMinutes: syncedGame.playtimeMinutes ?? undefined,
+        lastPlayedAt: syncedGame.lastPlayedAt ?? null,
+        completionPercent: syncedGame.completionPercent ?? null,
         rawData: syncedGame.rawData as Prisma.InputJsonValue | undefined,
         lastSyncedAt: new Date(),
       },
@@ -298,6 +302,8 @@ export async function syncSteamLibraryForUser(userId: string) {
         externalAccountId: steamAccount.id,
         platformName: syncedGame.platformName ?? undefined,
         playtimeMinutes: syncedGame.playtimeMinutes ?? undefined,
+        lastPlayedAt: syncedGame.lastPlayedAt ?? null,
+        completionPercent: syncedGame.completionPercent ?? null,
         rawData: syncedGame.rawData as Prisma.InputJsonValue | undefined,
         lastSyncedAt: new Date(),
       },
@@ -336,6 +342,28 @@ function parseStatus(rawValue: unknown) {
   return UserGameStatus.OWNED;
 }
 
+function parseCompletionPercent(rawValue: unknown) {
+  const normalized = String(rawValue ?? "")
+    .trim()
+    .replace(",", ".");
+
+  if (!normalized) {
+    return null;
+  }
+
+  const numericValue = Number(normalized.replace(/%$/, "").trim());
+  if (!Number.isFinite(numericValue)) {
+    return null;
+  }
+
+  const percent =
+    numericValue > 0 && numericValue <= 1 && normalized.includes(".")
+      ? numericValue * 100
+      : numericValue;
+
+  return Math.min(100, Math.max(0, Math.round(percent)));
+}
+
 function normalizeCsvRows(
   csvText: string,
   mapping: CsvColumnMapping,
@@ -355,17 +383,24 @@ function normalizeCsvRows(
       ? String(row[mapping.playtimeHours] ?? "").trim()
       : "";
     const playtimeHours = playtimeValue ? Number(playtimeValue) : null;
+    const status = parseStatus(mapping.status ? row[mapping.status] : undefined);
+    const completionPercent = mapping.completionPercent
+      ? parseCompletionPercent(row[mapping.completionPercent])
+      : status === UserGameStatus.COMPLETED
+        ? 100
+        : null;
 
     return {
       title,
       platformName: mapping.platform
         ? String(row[mapping.platform] ?? "").trim() || null
         : null,
-      status: parseStatus(mapping.status ? row[mapping.status] : undefined),
+      status,
       playtimeMinutes:
         playtimeHours !== null && Number.isFinite(playtimeHours)
           ? Math.round(playtimeHours * 60)
           : null,
+      completionPercent,
       notes: mapping.notes
         ? String(row[mapping.notes] ?? "").trim() || null
         : null,
@@ -425,6 +460,7 @@ export async function importCsvForUser({
             source: EntrySource.CSV,
             platformName: row.platformName ?? undefined,
             playtimeMinutes: row.playtimeMinutes ?? undefined,
+            completionPercent: row.completionPercent ?? undefined,
             notes: row.notes ?? undefined,
             rawData: row.rawData as Prisma.InputJsonValue,
           },
@@ -435,6 +471,7 @@ export async function importCsvForUser({
             source: EntrySource.CSV,
             platformName: row.platformName ?? undefined,
             playtimeMinutes: row.playtimeMinutes ?? undefined,
+            completionPercent: row.completionPercent ?? undefined,
             notes: row.notes ?? undefined,
             rawData: row.rawData as Prisma.InputJsonValue,
           },
@@ -449,6 +486,7 @@ export async function importCsvForUser({
             platformName: row.platformName ?? undefined,
             statusText: row.status,
             playtimeMinutes: row.playtimeMinutes ?? undefined,
+            completionPercent: row.completionPercent ?? undefined,
             notes: row.notes ?? undefined,
             externalId: row.externalId ?? undefined,
             outcome: ImportRowStatus.IMPORTED,
@@ -468,6 +506,7 @@ export async function importCsvForUser({
             platformName: row.platformName ?? undefined,
             statusText: row.status,
             playtimeMinutes: row.playtimeMinutes ?? undefined,
+            completionPercent: row.completionPercent ?? undefined,
             notes: row.notes ?? undefined,
             externalId: row.externalId ?? undefined,
             outcome: ImportRowStatus.FAILED,

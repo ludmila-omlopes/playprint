@@ -1,0 +1,140 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { AssistantSignalType, UserGameStatus } from "@prisma/client";
+import { decideBuy } from "../src/lib/assistant/buy-decision.ts";
+import { scoreBacklogEntries } from "../src/lib/assistant/scoring.ts";
+
+const now = new Date("2026-05-25T00:00:00.000Z");
+
+test("untouched owned game older than 30 days is flagged", () => {
+  const insights = scoreBacklogEntries([
+    createEntry({ name: "Old Zero", createdAt: "2026-03-01", playtimeMinutes: 0 }),
+  ], now);
+
+  assert.equal(insights[0]?.signalType, AssistantSignalType.UNTOUCHED);
+});
+
+test("short sample not played in 60 days is sampled-dropped", () => {
+  const insights = scoreBacklogEntries([
+    createEntry({
+      name: "Short Sample",
+      createdAt: "2026-01-01",
+      playtimeMinutes: 45,
+      lastPlayedAt: "2026-03-20",
+    }),
+  ], now);
+
+  assert.ok(
+    insights.some((insight) => insight.signalType === AssistantSignalType.SAMPLED_DROPPED),
+  );
+});
+
+test("stale playing game is flagged after two idle weeks", () => {
+  const insights = scoreBacklogEntries([
+    createEntry({
+      name: "Paused Campaign",
+      status: UserGameStatus.PLAYING,
+      createdAt: "2026-01-01",
+      playtimeMinutes: 600,
+      lastPlayedAt: "2026-05-01",
+    }),
+  ], now);
+
+  assert.ok(
+    insights.some((insight) => insight.signalType === AssistantSignalType.STALE_PLAYING),
+  );
+});
+
+test("favorite games are not release candidates", () => {
+  const insights = scoreBacklogEntries([
+    createEntry({
+      name: "Favorite Old Game",
+      createdAt: "2025-01-01",
+      playtimeMinutes: 0,
+      isFavorite: true,
+    }),
+  ], now);
+
+  assert.ok(
+    !insights.some((insight) => insight.signalType === AssistantSignalType.RELEASE_CANDIDATE),
+  );
+});
+
+test("completed games are excluded from active backlog recommendations", () => {
+  const insights = scoreBacklogEntries([
+    createEntry({
+      name: "Done",
+      status: UserGameStatus.COMPLETED,
+      createdAt: "2025-01-01",
+      playtimeMinutes: 0,
+      completionPercent: 100,
+    }),
+  ], now);
+
+  assert.equal(insights.length, 0);
+});
+
+test("wishlist game similar to untouched owned games gets wishlist risk", () => {
+  const insights = scoreBacklogEntries([
+    createEntry({ name: "Wanted RPG", status: UserGameStatus.WISHLIST, genres: ["RPG"] }),
+    createEntry({ name: "Owned RPG 1", createdAt: "2025-01-01", genres: ["RPG"] }),
+    createEntry({ name: "Owned RPG 2", createdAt: "2025-01-01", genres: ["RPG"] }),
+  ], now);
+
+  assert.ok(
+    insights.some((insight) => insight.signalType === AssistantSignalType.WISHLIST_RISK),
+  );
+});
+
+test("buy decision skips games already owned", () => {
+  const decision = decideBuy(
+    { title: "Owned RPG", genres: ["RPG"] },
+    [createEntry({ name: "Owned RPG", genres: ["RPG"] })],
+  );
+
+  assert.equal(decision.verdict, "SKIP_FOR_NOW");
+});
+
+test("buy decision waits for sale when fit is good but similar games are untouched", () => {
+  const decision = decideBuy(
+    { title: "New RPG", genres: ["RPG"], priceText: "$39.99" },
+    [
+      createEntry({ name: "Played RPG 1", genres: ["RPG"], playtimeMinutes: 300 }),
+      createEntry({ name: "Played RPG 2", genres: ["RPG"], playtimeMinutes: 500 }),
+      createEntry({ name: "Untouched RPG 1", genres: ["RPG"], playtimeMinutes: 0 }),
+      createEntry({ name: "Untouched RPG 2", genres: ["RPG"], playtimeMinutes: 0 }),
+    ],
+  );
+
+  assert.equal(decision.verdict, "WAIT_FOR_SALE");
+});
+
+function createEntry({
+  name,
+  status = UserGameStatus.OWNED,
+  createdAt = "2026-01-01",
+  playtimeMinutes = 0,
+  lastPlayedAt = null,
+  completionPercent = null,
+  isFavorite = false,
+  activeBacklog = true,
+  genres = [],
+}) {
+  return {
+    id: name.toLowerCase().replaceAll(" ", "-"),
+    status,
+    playtimeMinutes,
+    lastPlayedAt: lastPlayedAt ? new Date(lastPlayedAt) : null,
+    completionPercent,
+    isFavorite,
+    activeBacklog,
+    createdAt: new Date(`${createdAt}T00:00:00.000Z`),
+    game: {
+      id: `${name}-game`,
+      name,
+      genres,
+      platforms: [],
+      aggregatedRating: null,
+    },
+  };
+}

@@ -12,6 +12,8 @@ export type SyncedLibraryGame = {
   title: string;
   platformName?: string | null;
   playtimeMinutes?: number | null;
+  lastPlayedAt?: Date | null;
+  completionPercent?: number | null;
   storeUrl?: string | null;
   rawData?: Record<string, unknown>;
 };
