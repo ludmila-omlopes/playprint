@@ -6,6 +6,7 @@ import { BuyDecisionForm } from "@/components/assistant/buy-decision-form";
 import { PlayNextPanel } from "@/components/assistant/play-next-panel";
 import { CsvImportWidget } from "@/components/csv-import-widget";
 import { getProfileData } from "@/lib/catalog";
+import { getDatabaseErrorMessage } from "@/lib/database-errors";
 import {
   getAssistantProfileData,
   getAssistantSignalEntryIds,
@@ -96,7 +97,34 @@ export default async function ProfilePage({
     );
   }
 
-  const profile = await getProfileData(userId);
+  let profile: Awaited<ReturnType<typeof getProfileData>>;
+  try {
+    profile = await getProfileData(userId);
+  } catch (error) {
+    console.error("Could not load profile data.", error);
+
+    return (
+      <main id="main-content" className="w-full max-w-[900px] mx-auto">
+        <section className="p-7 text-center border-3 border-ink rounded-[30px] bg-[#ffd5ca] shadow-hard">
+          <p className="section-label">Database unavailable</p>
+          <h1 className="mb-3 font-display text-[clamp(2rem,5vw,3.4rem)] leading-[0.98] uppercase">
+            Profile data cannot load yet.
+          </h1>
+          <p className="max-w-[38rem] mx-auto font-bold leading-relaxed">
+            {getDatabaseErrorMessage(error)} Vercel deployments need a
+            production database connection; this repo&apos;s SQLite file setup is
+            intended for local development.
+          </p>
+          <div className="flex items-center justify-center gap-3.5 flex-wrap mt-7">
+            <Link className="btn btn-primary" href="/">
+              Back to landing
+            </Link>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   if (!profile) {
     redirect("/");
   }

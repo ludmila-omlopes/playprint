@@ -16,20 +16,31 @@ export const metadata: Metadata = {
     "A game catalog that syncs Steam libraries, imports CSV data, and enriches titles with IGDB metadata.",
 };
 
+async function getNavigationUser(userId: string | null) {
+  if (!userId) {
+    return null;
+  }
+
+  try {
+    return await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        externalAccounts: true,
+      },
+    });
+  } catch (error) {
+    console.error("Could not load navigation user.", error);
+    return null;
+  }
+}
+
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const userId = await getSessionUserId();
-  const navigationUser = userId
-    ? await prisma.user.findUnique({
-        where: { id: userId },
-        include: {
-          externalAccounts: true,
-        },
-      })
-    : null;
+  const navigationUser = await getNavigationUser(userId);
 
   return (
     <html lang="en">
