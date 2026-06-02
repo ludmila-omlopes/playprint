@@ -47,7 +47,7 @@ This means multiple providers can eventually point to the same internal game ins
 
 ## Requirements
 
-- Node.js 20+
+- Node.js 22.5+ for the local SQLite bootstrap script
 - npm
 
 Optional, depending on what you want to use:
@@ -81,6 +81,8 @@ OPENAI_MODEL="gpt-5.4-mini"
 Notes:
 
 - `AUTH_SECRET` should be a long random string in any non-local environment.
+- `DATABASE_URL` is required for catalog features. The default SQLite value is
+  intended for local development.
 - `STEAM_API_KEY` is required for owned library sync. Steam sign-in itself uses OpenID.
 - IGDB enrichment is optional. If IGDB credentials are missing, the app still works, but imported/synced games stay with local metadata only.
 - HowLongToBeat enrichment is optional and best-effort. If the website-backed search is unavailable, imports and Steam sync continue without completion-time estimates.
@@ -130,6 +132,28 @@ Current scripts:
 - `npm run db:generate`: generates Prisma Client
 
 Important: `db:push` is not running `prisma db push` right now. It is an alias to the custom bootstrap script. If you later move to Prisma-managed migrations, update this section and the scripts accordingly.
+
+## Vercel Deployment
+
+The public shell can render without a database, but Steam sign-in, profile data,
+CSV import, and catalog stats require a reachable production database.
+
+The current `DATABASE_URL="file:./dev.db"` setup is for local development only.
+Vercel serverless deployments do not provide durable app-local SQLite storage, so
+using the local SQLite file there will either fail at runtime or lose data across
+function instances. For a real Vercel deployment, move the Prisma datasource to a
+managed database supported by the deployment environment, set `DATABASE_URL`,
+run the schema setup for that database, and set these environment variables:
+
+```env
+APP_URL="https://your-vercel-domain.vercel.app"
+AUTH_SECRET="generate-a-long-random-secret"
+DATABASE_URL="your-production-database-url"
+```
+
+Optional integrations still degrade independently: missing IGDB credentials only
+skip metadata enrichment, and missing `STEAM_API_KEY` only blocks owned-library
+sync after Steam sign-in.
 
 ## Available Scripts
 

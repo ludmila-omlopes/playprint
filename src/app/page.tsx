@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getProfileData } from "@/lib/catalog";
+import { getDatabaseErrorMessage } from "@/lib/database-errors";
 import { prisma } from "@/lib/prisma";
 import { getSessionUserId } from "@/lib/session";
 import { formatDate, formatNumber } from "@/lib/utils";
@@ -25,19 +26,56 @@ const sources = [
   },
 ];
 
-export default async function Home() {
-  const [userId, catalogStats, enrichedStats] = await Promise.all([
-    getSessionUserId(),
-    prisma.game.aggregate({ _count: { id: true } }),
-    prisma.game.aggregate({ _count: { igdbId: true } }),
-  ]);
+async function getHomeData() {
+  const userId = await getSessionUserId();
 
-  const profile = userId ? await getProfileData(userId) : null;
+  try {
+    const [catalogStats, enrichedStats, profile] = await Promise.all([
+      prisma.game.aggregate({ _count: { id: true } }),
+      prisma.game.aggregate({ _count: { igdbId: true } }),
+      userId ? getProfileData(userId) : Promise.resolve(null),
+    ]);
+
+    return {
+      userId,
+      profile,
+      catalogCount: catalogStats._count.id,
+      enrichedCount: enrichedStats._count.igdbId,
+      databaseError: null,
+    };
+  } catch (error) {
+    console.error("Could not load home catalog data.", error);
+
+    return {
+      userId,
+      profile: null,
+      catalogCount: 0,
+      enrichedCount: 0,
+      databaseError: getDatabaseErrorMessage(error),
+    };
+  }
+}
+
+export default async function Home() {
+  const { profile, catalogCount, enrichedCount, databaseError } =
+    await getHomeData();
   const wishlistCount = profile?.wishlistEntries.length ?? 0;
   const latestImport = profile?.latestImport ?? null;
 
   return (
     <main id="main-content" className="w-full max-w-[1200px] mx-auto grid gap-6 overflow-hidden pb-9">
+      {databaseError ? (
+        <section
+          aria-live="polite"
+          className="panel bg-[#ffd5ca] text-sm font-bold"
+          role="status"
+        >
+          {databaseError} Vercel deployments need a production database
+          connection; this repo&apos;s SQLite file setup is intended for local
+          development.
+        </section>
+      ) : null}
+
       {/* Hero */}
       <section className="grid grid-cols-[minmax(0,1.05fr)_minmax(300px,0.95fr)] items-center gap-8 p-8 bg-yellow border-3 border-ink rounded-card shadow-hard max-lg:grid-cols-1 max-md:p-5">
         <div className="flex min-w-0 flex-col gap-5">
@@ -72,7 +110,7 @@ export default async function Home() {
               Three messy sources, one clean catalog.
             </h2>
           </div>
-          <MergeBadge count={formatNumber(catalogStats._count.id)} />
+          <MergeBadge count={formatNumber(catalogCount)} />
         </div>
 
         <div className="grid grid-cols-3 gap-4 max-md:grid-cols-1">
@@ -95,9 +133,9 @@ export default async function Home() {
       {/* Live stats + final CTA */}
       <section className="panel flex items-center justify-between gap-8 bg-peach max-lg:flex-col max-lg:items-start">
         <div className="grid grid-cols-3 gap-4 min-w-0 max-sm:grid-cols-1">
-          <Stat label="Catalog" value={formatNumber(catalogStats._count.id)} />
+          <Stat label="Catalog" value={formatNumber(catalogCount)} />
           <Stat label="Wishlist" value={formatNumber(wishlistCount)} />
-          <Stat label="Enriched" value={formatNumber(enrichedStats._count.igdbId)} />
+          <Stat label="Enriched" value={formatNumber(enrichedCount)} />
         </div>
         <div className="flex flex-col items-start gap-3">
           <p className="text-sm font-bold uppercase tracking-wide">
