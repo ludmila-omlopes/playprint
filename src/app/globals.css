@@ -2,13 +2,13 @@
 
 /* ── Theme tokens ── */
 @theme {
-  --color-bg: #f6efe3;
+  --color-bg: #f4f0ff;
   --color-ink: #151515;
-  --color-paper: #fff9ef;
-  --color-peach: #ff7a59;
-  --color-lime: #d3ff65;
-  --color-cyan: #75d7ff;
-  --color-yellow: #ffd84d;
+  --color-paper: #ffffff;
+  --color-peach: #ff6fa5;
+  --color-lime: #b6f36b;
+  --color-cyan: #58c7f3;
+  --color-yellow: #ffd93d;
 
   --font-display: "Bungee", cursive;
   --font-body: "Space Grotesk", sans-serif;
@@ -40,9 +40,9 @@
   body {
     color: var(--color-ink);
     background:
-      radial-gradient(circle at top left, rgba(211, 255, 101, 0.5), transparent 26%),
-      radial-gradient(circle at top right, rgba(117, 215, 255, 0.45), transparent 30%),
-      linear-gradient(180deg, #fff5dd 0%, var(--color-bg) 54%, #efe4d3 100%);
+      radial-gradient(circle at top left, rgba(182, 243, 107, 0.5), transparent 26%),
+      radial-gradient(circle at top right, rgba(88, 199, 243, 0.45), transparent 30%),
+      linear-gradient(180deg, #fbf6ff 0%, var(--color-bg) 54%, #e9e0ff 100%);
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
