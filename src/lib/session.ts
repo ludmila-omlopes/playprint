@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { jwtVerify, SignJWT } from "jose";
 
-const SESSION_COOKIE = "playprint-session";
+const SESSION_COOKIE = "filazo-session";
 const SESSION_DURATION = 60 * 60 * 24 * 30;
 
 function getSessionSecret() {

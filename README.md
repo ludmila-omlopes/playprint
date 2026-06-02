@@ -1,6 +1,6 @@
-# Playprint
+# filazo
 
-Playprint is a game library app built with Next.js 16, React 19, Prisma, and SQLite.
+filazo is a game library app built with Next.js 16, React 19, Prisma, and SQLite.
 It is designed around a canonical local game catalog that can absorb data from multiple sources:
 
 - Steam account sign-in and owned library sync
@@ -55,7 +55,7 @@ Optional, depending on what you want to use:
 - Steam Web API key for owned library sync
 - IGDB client credentials for metadata enrichment
 
-HowLongToBeat enrichment uses an unofficial website-backed package and does not require credentials.
+HowLongToBeat enrichment uses an unofficial website-backed lookup and does not require credentials.
 
 ## Environment Variables
 
@@ -196,8 +196,8 @@ src/
   lib/
     catalog.ts                Catalog resolution, sync, import logic
     assistant/                    Backlog scoring, AI summaries, and buy decisions
-    igdb.ts                   IGDB auth, search, and ranking
     hltb.ts                   HowLongToBeat best-effort completion-time search
+    igdb.ts                   IGDB auth, search, and ranking
     prisma.ts                 Prisma client singleton
     session.ts                Signed cookie session helpers
     steam.ts                  Steam OpenID and Steam Web API integration

@@ -18,15 +18,15 @@ export async function generateMetadata({
 
   if (!game) {
     return {
-      title: "Game not found | Playprint",
+      title: "Game not found | filazo",
     };
   }
 
   return {
-    title: `${game.name} | Playprint`,
+    title: `${game.name} | filazo`,
     description:
       game.summary ??
-      `Playprint catalog page for ${game.name}, enriched with IGDB metadata.`,
+      `filazo catalog page for ${game.name}, enriched with IGDB metadata.`,
   };
 }
 

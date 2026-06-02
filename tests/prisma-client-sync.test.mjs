@@ -48,8 +48,8 @@ test("generated Prisma client includes synced Steam user game fields", () => {
 });
 
 test("SQLite bootstrap creates synced Steam user game columns", () => {
-  const tempDir = mkdtempSync(path.join(tmpdir(), "playprint-db-"));
-  const databasePath = path.join(tempDir, "playprint-test.db");
+  const tempDir = mkdtempSync(path.join(tmpdir(), "filazo-db-"));
+  const databasePath = path.join(tempDir, "filazo-test.db");
 
   try {
     const result = spawnSync("node", ["scripts/init-db.mjs"], {
