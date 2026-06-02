@@ -11,6 +11,9 @@ test("generated Prisma client includes synced Steam user game fields", () => {
   const model = Prisma.dmmf.datamodel.models.find(
     (item) => item.name === "UserGameEntry",
   );
+  const gameModel = Prisma.dmmf.datamodel.models.find(
+    (item) => item.name === "Game",
+  );
   const insightModel = Prisma.dmmf.datamodel.models.find(
     (item) => item.name === "UserGameInsight",
   );
@@ -31,13 +34,22 @@ test("generated Prisma client includes synced Steam user game fields", () => {
     model.fields.some((field) => field.name === "activeBacklog"),
     "Run npm run db:generate after changing prisma/schema.prisma.",
   );
+  assert.ok(gameModel, "Game model should exist in generated Prisma client");
+  assert.ok(
+    gameModel.fields.some((field) => field.name === "hltbMainStoryMinutes"),
+    "Run npm run db:generate after changing prisma/schema.prisma.",
+  );
+  assert.ok(
+    gameModel.fields.some((field) => field.name === "hltbCompletionistMinutes"),
+    "Run npm run db:generate after changing prisma/schema.prisma.",
+  );
   assert.ok(insightModel, "UserGameInsight model should exist.");
   assert.ok(AssistantRunModel, "AssistantRun model should exist.");
 });
 
 test("SQLite bootstrap creates synced Steam user game columns", () => {
-  const tempDir = mkdtempSync(path.join(tmpdir(), "checkpoint-db-"));
-  const databasePath = path.join(tempDir, "checkpoint-test.db");
+  const tempDir = mkdtempSync(path.join(tmpdir(), "playprint-db-"));
+  const databasePath = path.join(tempDir, "playprint-test.db");
 
   try {
     const result = spawnSync("node", ["scripts/init-db.mjs"], {
@@ -67,6 +79,10 @@ test("SQLite bootstrap creates synced Steam user game columns", () => {
       assertTableHasColumn(db, "UserGameInsight", "signalType");
       assertTableHasColumn(db, "UserGameInsight", "friction");
       assertTableHasColumn(db, "AssistantRun", "outputSummary");
+      assertTableHasColumn(db, "Game", "hltbMainStoryMinutes");
+      assertTableHasColumn(db, "Game", "hltbMainExtraMinutes");
+      assertTableHasColumn(db, "Game", "hltbCompletionistMinutes");
+      assertTableHasColumn(db, "Game", "hltbUpdatedAt");
     } finally {
       db.close();
     }
