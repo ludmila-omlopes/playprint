@@ -1,6 +1,6 @@
-# Checkpoint
+# filazo
 
-Checkpoint is a game library app built with Next.js 16, React 19, Prisma, and SQLite.
+filazo is a game library app built with Next.js 16, React 19, Prisma, and SQLite.
 It is designed around a canonical local game catalog that can absorb data from multiple sources:
 
 - Steam account sign-in and owned library sync

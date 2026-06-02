@@ -46,7 +46,7 @@ export default async function Home() {
             Know what to play next.
           </h1>
           <p className="max-w-[42ch] text-[1.05rem] font-medium leading-relaxed">
-            Playprint pulls your Steam library, backlog spreadsheets, and IGDB
+            filazo pulls your Steam library, backlog spreadsheets, and IGDB
             metadata into one catalog — then shortlists what&apos;s worth your
             evening.
           </p>

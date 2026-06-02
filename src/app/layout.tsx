@@ -11,7 +11,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUserId } from "@/lib/session";
 
 export const metadata: Metadata = {
-  title: "Checkpoint",
+  title: "filazo",
   description:
     "A game catalog that syncs Steam libraries, imports CSV data, and enriches titles with IGDB metadata.",
 };
@@ -46,7 +46,7 @@ export default async function RootLayout({
           <header className="w-full max-w-[1200px] mx-auto mb-5 px-6 py-[18px] flex items-center justify-between gap-4 bg-paper/85 border-3 border-ink rounded-pill shadow-header backdrop-blur-[10px] max-lg:flex-col max-lg:rounded-card">
             <Link href="/" className="inline-flex items-center gap-4">
               <span className="px-3.5 py-2.5 bg-yellow border-3 border-ink rounded-pill shadow-hard-xs font-display text-[0.95rem] tracking-wide uppercase">
-                Checkpoint
+                filazo
               </span>
               <span className="max-w-[30ch] text-[0.92rem] max-sm:hidden">
                 Catalog your library like it deserves a museum wall.

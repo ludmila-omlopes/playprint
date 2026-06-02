@@ -8,7 +8,7 @@ This version has breaking changes, APIs, conventions, and file structure may all
 
 ## Product Definition
 
-Checkpoint is a game library app built around a canonical internal catalog.
+filazo is a game library app built around a canonical internal catalog.
 It currently merges data from:
 
 - Steam sign-in and owned game sync

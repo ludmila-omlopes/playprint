@@ -169,7 +169,7 @@ export default async function ProfilePage({
           <div className="min-w-0 flex-1">
             <p className="section-label !mb-1">Collector profile</p>
             <h1 className="font-display text-[clamp(1.6rem,4vw,2.8rem)] leading-tight uppercase truncate">
-              {profile.user.displayName ?? "Checkpoint Collector"}
+              {profile.user.displayName ?? "filazo Collector"}
             </h1>
             <p className="text-ink/60 text-sm mt-1">
               Steam connected · Ready for PlayStation, Xbox &amp; future stores
