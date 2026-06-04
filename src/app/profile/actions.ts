@@ -6,8 +6,10 @@ import { z } from "zod";
 import {
   importCsvForUser,
   type CsvColumnMapping,
+  syncPlayStationLibraryForUser,
   syncSteamLibraryForUser,
 } from "@/lib/catalog";
+import { connectPlayStationAccountForUser } from "@/lib/playstation";
 import { prisma } from "@/lib/prisma";
 import { getSessionUserId } from "@/lib/session";
 
@@ -15,6 +17,10 @@ const importSchema = z.object({
   fileName: z.string().min(1),
   csvText: z.string().min(1),
   mapping: z.string().min(1),
+});
+
+const playStationConnectSchema = z.object({
+  npsso: z.string().trim().min(32).max(512),
 });
 
 export async function syncSteamLibraryAction() {
@@ -36,6 +42,59 @@ export async function syncSteamLibraryAction() {
   revalidatePath("/profile");
   revalidatePath("/");
   redirect(`/profile?synced=${syncedCount}`);
+}
+
+export async function connectPlayStationAction(formData: FormData) {
+  const userId = await getSessionUserId();
+  if (!userId) {
+    redirect("/profile?error=Sign%20in%20before%20connecting%20PlayStation.");
+  }
+
+  const parsed = playStationConnectSchema.safeParse({
+    npsso: formData.get("npsso"),
+  });
+
+  if (!parsed.success) {
+    redirect("/profile?error=Enter%20a%20valid%20PlayStation%20NPSSO%20token.");
+  }
+
+  try {
+    await connectPlayStationAccountForUser({
+      userId,
+      npsso: parsed.data.npsso,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Could not connect PlayStation.";
+    redirect(`/profile?error=${encodeURIComponent(message)}`);
+  }
+
+  revalidatePath("/profile");
+  revalidatePath("/");
+  redirect("/profile?playstation=connected");
+}
+
+export async function syncPlayStationLibraryAction() {
+  const userId = await getSessionUserId();
+  if (!userId) {
+    redirect("/profile?error=Sign%20in%20before%20syncing%20PlayStation.");
+  }
+
+  let syncedCount: number;
+  try {
+    const result = await syncPlayStationLibraryForUser(userId);
+    syncedCount = result.syncedCount;
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "PlayStation sync failed.";
+    redirect(`/profile?error=${encodeURIComponent(message)}`);
+  }
+
+  revalidatePath("/profile");
+  revalidatePath("/");
+  redirect(`/profile?playstationSynced=${syncedCount}`);
 }
 
 export async function importCsvAction(formData: FormData) {

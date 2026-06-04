@@ -3,6 +3,7 @@ import {
   AssistantSignalType,
   UserGameStatus,
 } from "@prisma/client";
+import { estimateRemainingTime } from "../time-estimates.ts";
 
 export type AssistantReason = {
   code: string;
@@ -26,6 +27,9 @@ export type AssistantGame = {
   genres?: unknown;
   platforms?: unknown;
   aggregatedRating?: number | null;
+  hltbMainStoryMinutes?: number | null;
+  hltbMainExtraMinutes?: number | null;
+  hltbCompletionistMinutes?: number | null;
 };
 
 export type AssistantEntry = {
@@ -119,6 +123,15 @@ function buildReason(code: string, label: string, evidence: string): AssistantRe
   return { code, label, evidence };
 }
 
+function formatRemainingMinutes(minutes: number) {
+  if (minutes < 60) {
+    return `~${minutes}m left`;
+  }
+
+  const hours = minutes / 60;
+  return `~${hours < 10 ? hours.toFixed(1) : Math.round(hours)}h left`;
+}
+
 function getUntouchedInsight(entry: AssistantEntry, now: Date): AssistantInsight | null {
   const playtime = entry.playtimeMinutes ?? 0;
   const ageDays = daysSince(latestDate(entry.createdAt, entry.lastSyncedAt), now) ?? 0;
@@ -209,24 +222,51 @@ function getStalePlayingInsight(entry: AssistantEntry, now: Date): AssistantInsi
 
 function getFinishableSoonInsight(entry: AssistantEntry): AssistantInsight | null {
   const completion = entry.completionPercent ?? 0;
+  const remainingTime = estimateRemainingTime(entry);
+  const isShortFinish =
+    remainingTime !== null &&
+    remainingTime.remainingMinutes > 0 &&
+    remainingTime.remainingMinutes <= 360;
 
-  if (entry.status === UserGameStatus.COMPLETED || completion < 65) {
+  if (
+    entry.status === UserGameStatus.COMPLETED ||
+    (completion < 65 && !isShortFinish)
+  ) {
     return null;
   }
+
+  const reasons = [
+    completion >= 65
+      ? buildReason(
+          "completion_near",
+          "Close enough to finish",
+          `${entry.game.name} is ${completion}% complete.`,
+        )
+      : null,
+    isShortFinish && remainingTime
+      ? buildReason(
+          "short_remaining_time",
+          "Short finish estimate",
+          `${entry.game.name} has ${formatRemainingMinutes(
+            remainingTime.remainingMinutes,
+          )} based on ${remainingTime.targetLabel}.`,
+        )
+      : null,
+  ].filter((reason): reason is AssistantReason => Boolean(reason));
 
   return {
     entryId: entry.id,
     signalType: AssistantSignalType.FINISHABLE_SOON,
     friction: BacklogFriction.COMPLETION_PRESSURE,
-    score: clampScore(50 + completion / 2),
-    confidence: 74,
-    reasons: [
-      buildReason(
-        "completion_near",
-        "Close enough to finish",
-        `${entry.game.name} is ${completion}% complete.`,
-      ),
-    ],
+    score: clampScore(
+      50 +
+        completion / 2 +
+        (remainingTime
+          ? Math.max(0, 360 - remainingTime.remainingMinutes) / 12
+          : 0),
+    ),
+    confidence: isShortFinish ? 80 : 74,
+    reasons,
     suggestedAction: "Schedule one focused session and decide if finishing still matters.",
   };
 }

@@ -57,6 +57,9 @@ db.exec(`
     "hltbMainExtraMinutes" INTEGER,
     "hltbCompletionistMinutes" INTEGER,
     "hltbUpdatedAt" DATETIME,
+    "metacriticScore" INTEGER,
+    "metacriticUrl" TEXT,
+    "metacriticUpdatedAt" DATETIME,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
@@ -208,5 +211,8 @@ addColumnIfMissing("Game", "hltbMainStoryMinutes", "INTEGER");
 addColumnIfMissing("Game", "hltbMainExtraMinutes", "INTEGER");
 addColumnIfMissing("Game", "hltbCompletionistMinutes", "INTEGER");
 addColumnIfMissing("Game", "hltbUpdatedAt", "DATETIME");
+addColumnIfMissing("Game", "metacriticScore", "INTEGER");
+addColumnIfMissing("Game", "metacriticUrl", "TEXT");
+addColumnIfMissing("Game", "metacriticUpdatedAt", "DATETIME");
 
 console.log(`Initialized SQLite database at ${databasePath}`);

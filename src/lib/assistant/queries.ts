@@ -34,6 +34,9 @@ function toAssistantEntry(
       genres: entry.game.genres,
       platforms: entry.game.platforms,
       aggregatedRating: entry.game.aggregatedRating,
+      hltbMainStoryMinutes: entry.game.hltbMainStoryMinutes,
+      hltbMainExtraMinutes: entry.game.hltbMainExtraMinutes,
+      hltbCompletionistMinutes: entry.game.hltbCompletionistMinutes,
     },
   };
 }

@@ -9,8 +9,10 @@ datasource db {
 
 enum ExternalProvider {
   STEAM
+  PLAYSTATION
   IGDB
   HLTB
+  METACRITIC
 }
 
 enum UserGameStatus {
@@ -23,6 +25,7 @@ enum UserGameStatus {
 
 enum EntrySource {
   STEAM
+  PLAYSTATION
   CSV
   MANUAL
 }
@@ -118,6 +121,9 @@ model Game {
   hltbMainExtraMinutes     Int?
   hltbCompletionistMinutes Int?
   hltbUpdatedAt            DateTime?
+  metacriticScore          Int?
+  metacriticUrl            String?
+  metacriticUpdatedAt      DateTime?
   createdAt                DateTime           @default(now())
   updatedAt                DateTime           @updatedAt
   providerLinks            GameProviderLink[]

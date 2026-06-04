@@ -9,6 +9,7 @@ export type ProviderProfile = {
 
 export type SyncedLibraryGame = {
   providerGameId: string;
+  providerGameIds?: string[];
   title: string;
   platformName?: string | null;
   playtimeMinutes?: number | null;
@@ -46,6 +47,14 @@ export type EnrichedCompletionTimes = {
   rawData?: Record<string, unknown>;
 };
 
+export type EnrichedReviewScore = {
+  providerGameId: string;
+  score: number;
+  url?: string | null;
+  sourceProvider?: string | null;
+  rawData?: Record<string, unknown>;
+};
+
 export interface ProviderAccountAdapter {
   provider: "STEAM";
   fetchProfile(providerAccountId: string): Promise<ProviderProfile>;
@@ -66,4 +75,12 @@ export interface CatalogCompletionTimeAdapter {
     title: string;
     platformName?: string | null;
   }): Promise<EnrichedCompletionTimes | null>;
+}
+
+export interface CatalogReviewScoreAdapter {
+  provider: "METACRITIC";
+  searchBestMatch(query: {
+    title: string;
+    steamAppId?: string | null;
+  }): Promise<EnrichedReviewScore | null>;
 }
