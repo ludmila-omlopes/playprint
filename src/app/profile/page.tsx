@@ -360,7 +360,10 @@ export default async function ProfilePage({
                           {entry.game.name}
                         </h3>
                         <p className="text-xs text-ink/60 mt-1">
-                          {formatPlaytime(entry.playtimeMinutes)}
+                          {formatPlaytime(
+                            entry.playtimeMinutes,
+                            entry.completionPercent,
+                          )}
                         </p>
                         {remainingTime ? (
                           <p
@@ -823,7 +826,10 @@ export default async function ProfilePage({
                         </span>
 
                         <span className="text-xs text-ink/60 max-md:hidden">
-                          {formatPlaytime(entry.playtimeMinutes)}
+                          {formatPlaytime(
+                            entry.playtimeMinutes,
+                            entry.completionPercent,
+                          )}
                         </span>
 
                         <span
@@ -840,7 +846,10 @@ export default async function ProfilePage({
                         </span>
 
                         <span className="text-xs text-ink/60 max-md:hidden">
-                          {formatLastPlayed(entry.lastPlayedAt)}
+                          {formatLastPlayed(
+                            entry.lastPlayedAt,
+                            entry.completionPercent,
+                          )}
                         </span>
 
                         <span className="text-xs text-ink/60 max-md:hidden">
@@ -946,7 +955,10 @@ export default async function ProfilePage({
                               </span>
                               {entry.playtimeMinutes && entry.playtimeMinutes > 0 ? (
                                 <span className="text-[0.65rem] text-white/70">
-                                  {formatPlaytime(entry.playtimeMinutes)}
+                                  {formatPlaytime(
+                                    entry.playtimeMinutes,
+                                    entry.completionPercent,
+                                  )}
                                 </span>
                               ) : null}
                               {remainingTime ? (
@@ -961,7 +973,10 @@ export default async function ProfilePage({
                               ) : null}
                               {entry.lastPlayedAt ? (
                                 <span className="text-[0.65rem] text-white/70">
-                                  {formatLastPlayed(entry.lastPlayedAt)}
+                                  {formatLastPlayed(
+                                    entry.lastPlayedAt,
+                                    entry.completionPercent,
+                                  )}
                                 </span>
                               ) : null}
                               {entry.completionPercent != null ? (

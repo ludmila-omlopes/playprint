@@ -36,9 +36,16 @@ export function uniqueSlug(base: string, suffix?: string) {
   return `${slugify(base)}-${suffix.toLowerCase()}`;
 }
 
-export function formatPlaytime(minutes: number | null | undefined) {
+export function formatPlaytime(
+  minutes: number | null | undefined,
+  completionPercent?: number | null,
+) {
   if (!minutes || minutes < 1) {
-    return "Freshly added";
+    if (completionPercent && completionPercent > 0) {
+      return "No time logged";
+    }
+
+    return "Not started";
   }
 
   if (minutes < 60) {
@@ -90,8 +97,15 @@ export function formatCompletionPercent(value: number | null | undefined) {
   return `${value}% complete`;
 }
 
-export function formatLastPlayed(date: Date | null | undefined) {
+export function formatLastPlayed(
+  date: Date | null | undefined,
+  completionPercent?: number | null,
+) {
   if (!date) {
+    if (completionPercent && completionPercent > 0) {
+      return "No play date";
+    }
+
     return "Never played";
   }
 
