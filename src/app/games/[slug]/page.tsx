@@ -279,7 +279,10 @@ export default async function GamePage({
                         {entry.user.displayName ?? "Collector"}
                       </span>
                       <span className="text-xs text-ink/50">
-                        {formatPlaytime(entry.playtimeMinutes)}
+                        {formatPlaytime(
+                          entry.playtimeMinutes,
+                          entry.completionPercent,
+                        )}
                       </span>
                       {remainingTime ? (
                         <span
