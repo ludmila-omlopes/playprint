@@ -5,6 +5,7 @@ import { BacklogDiagnosis } from "@/components/assistant/backlog-diagnosis";
 import { BuyDecisionForm } from "@/components/assistant/buy-decision-form";
 import { PlayNextPanel } from "@/components/assistant/play-next-panel";
 import { CsvImportWidget } from "@/components/csv-import-widget";
+import { SyncActionForm } from "@/components/sync-action-form";
 import { getProfileData } from "@/lib/catalog";
 import { getDatabaseErrorMessage } from "@/lib/database-errors";
 import {
@@ -25,9 +26,13 @@ import {
   formatLastPlayed,
   formatNumber,
   formatPlaytime,
+  formatRemainingTime,
 } from "@/lib/utils";
+import { estimateRemainingTime } from "@/lib/time-estimates";
 import {
+  connectPlayStationAction,
   importCsvAction,
+  syncPlayStationLibraryAction,
   syncSteamLibraryAction,
   toggleFavoriteAction,
 } from "./actions";
@@ -41,6 +46,8 @@ type ProfileSearchParams = Promise<{
   connected?: string;
   synced?: string;
   imported?: string;
+  playstation?: string;
+  playstationSynced?: string;
   assistant?: string;
   error?: string;
 }>;
@@ -81,8 +88,8 @@ export default async function ProfilePage({
             Connect Steam to build your first shelf.
           </h1>
           <p className="max-w-[36rem] mx-auto leading-relaxed">
-            The profile page becomes functional as soon as you link Steam. CSV
-            import and IGDB enrichment live here too.
+            The profile page becomes functional as soon as you link Steam. CSV,
+            PlayStation import, and IGDB enrichment live here too.
           </p>
           <div className="flex items-center justify-center gap-3.5 flex-wrap mt-7">
             <a className="btn btn-primary" href="/api/auth/steam">
@@ -159,6 +166,11 @@ export default async function ProfilePage({
           tone: "success" as const,
           message: `Steam sync finished. ${query.synced} titles refreshed.`,
         }
+      : query.playstationSynced
+        ? {
+            tone: "success" as const,
+            message: `PlayStation sync finished. ${query.playstationSynced} played titles refreshed.`,
+          }
       : query.imported
         ? {
             tone: "success" as const,
@@ -170,6 +182,12 @@ export default async function ProfilePage({
               message:
                 "Steam account connected. Run a sync to pull the library.",
             }
+          : query.playstation === "connected"
+            ? {
+                tone: "success" as const,
+                message:
+                  "PlayStation connected. Run a sync to pull played trophy titles.",
+              }
           : query.assistant
             ? {
                 tone: "success" as const,
@@ -200,7 +218,7 @@ export default async function ProfilePage({
               {profile.user.displayName ?? "filazo Collector"}
             </h1>
             <p className="text-ink/60 text-sm mt-1">
-              Steam connected · Ready for PlayStation, Xbox &amp; future stores
+              Steam connected · PlayStation CSV ready &amp; future stores next
             </p>
           </div>
         </div>
@@ -315,11 +333,14 @@ export default async function ProfilePage({
 
             {profile.favoriteEntries.length ? (
               <div className="grid grid-cols-4 gap-3.5 max-lg:grid-cols-2 max-sm:grid-cols-1">
-                {profile.favoriteEntries.map((entry) => (
-                  <div
-                    className="relative group border-3 border-ink rounded-[24px] overflow-hidden bg-gradient-to-b from-peach/20 to-yellow/30 shadow-hard-sm hover:shadow-hard hover:-translate-y-1 transition-all duration-200"
-                    key={`fav-${entry.id}`}
-                  >
+                {profile.favoriteEntries.map((entry) => {
+                  const remainingTime = estimateRemainingTime(entry);
+
+                  return (
+                    <div
+                      className="relative group border-3 border-ink rounded-[24px] overflow-hidden bg-gradient-to-b from-peach/20 to-yellow/30 shadow-hard-sm hover:shadow-hard hover:-translate-y-1 transition-all duration-200"
+                      key={`fav-${entry.id}`}
+                    >
                     <Link href={`/games/${entry.game.slug}`}>
                       <div className="aspect-[3/4] overflow-hidden bg-gradient-to-b from-cyan to-yellow">
                         {entry.game.coverUrl ? (
@@ -341,6 +362,14 @@ export default async function ProfilePage({
                         <p className="text-xs text-ink/60 mt-1">
                           {formatPlaytime(entry.playtimeMinutes)}
                         </p>
+                        {remainingTime ? (
+                          <p
+                            className="text-xs font-bold text-ink/75"
+                            title={`Based on HLTB ${remainingTime.targetLabel}`}
+                          >
+                            {formatRemainingTime(remainingTime.remainingMinutes)}
+                          </p>
+                        ) : null}
                       </div>
                     </Link>
                     <form action={toggleFavoriteAction} className="absolute top-2.5 right-2.5">
@@ -356,8 +385,9 @@ export default async function ProfilePage({
                         </svg>
                       </button>
                     </form>
-                  </div>
-                ))}
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div className="p-7 text-center border-3 border-ink rounded-[30px] bg-paper/95 shadow-hard">
@@ -369,8 +399,8 @@ export default async function ProfilePage({
             )}
           </section>
 
-          {/* Steam + CSV Panels */}
-          <section className="grid grid-cols-2 gap-6 max-lg:grid-cols-1">
+          {/* Steam + import panels */}
+          <section className="grid grid-cols-3 gap-6 max-xl:grid-cols-2 max-lg:grid-cols-1">
             <article className="panel">
               <div className="flex items-center justify-between gap-3.5 mb-[22px] max-lg:flex-col max-lg:items-start">
                 <div>
@@ -380,11 +410,12 @@ export default async function ProfilePage({
                   </h2>
                 </div>
                 {profile.steamAccount ? (
-                  <form action={syncSteamLibraryAction}>
-                    <button className="btn btn-primary" type="submit">
-                      Sync Steam library
-                    </button>
-                  </form>
+                  <SyncActionForm
+                    action={syncSteamLibraryAction}
+                    buttonLabel="Sync Steam library"
+                    pendingLabel="Syncing Steam..."
+                    pendingNotice="Steam sync is running. Keep this page open until the library refresh finishes."
+                  />
                 ) : (
                   <a className="btn btn-primary" href="/api/auth/steam">
                     Connect Steam
@@ -437,7 +468,126 @@ export default async function ProfilePage({
             <article className="panel">
               <div className="flex items-center justify-between gap-3.5 mb-[22px] max-lg:flex-col max-lg:items-start">
                 <div>
-                  <span className="section-label">CSV import</span>
+                  <span className="section-label">PlayStation</span>
+                  <h2 className="text-[clamp(1.5rem,3vw,2.2rem)] leading-[1.05]">
+                    Played catalog sync
+                  </h2>
+                </div>
+                {profile.playStationAccount ? (
+                  <SyncActionForm
+                    action={syncPlayStationLibraryAction}
+                    buttonLabel="Sync PlayStation"
+                    pendingLabel="Syncing PSN..."
+                    pendingNotice="PlayStation sync is running. Keep this page open while purchased games and trophy titles are attached to your catalog."
+                  />
+                ) : null}
+              </div>
+
+              <div className="grid gap-3.5">
+                <div className="flex items-center justify-between gap-3.5 pb-3.5 border-b border-dashed border-ink/25 max-lg:flex-col max-lg:items-start">
+                  <span>Status</span>
+                  <strong>
+                    {profile.playStationAccount ? "Connected" : "Not connected"}
+                  </strong>
+                </div>
+                <div className="flex items-center justify-between gap-3.5 pb-3.5 border-b border-dashed border-ink/25 max-lg:flex-col max-lg:items-start">
+                  <span>PlayStation sync</span>
+                  <strong>
+                    {profile.playStationAccount?.lastSyncedAt
+                      ? formatDate(profile.playStationAccount.lastSyncedAt)
+                      : "Not synced yet"}
+                  </strong>
+                </div>
+                {profile.playStationAccount?.profileUrl ? (
+                  <div className="flex items-center justify-between gap-3.5 pb-3.5 border-b border-dashed border-ink/25 max-lg:flex-col max-lg:items-start">
+                    <span>Profile</span>
+                    <strong>
+                      <a
+                        href={profile.playStationAccount.profileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="nav-link"
+                      >
+                        Open profile
+                      </a>
+                    </strong>
+                  </div>
+                ) : null}
+                {profile.playStationAccount ? (
+                  <p className="text-sm text-ink/70 leading-relaxed">
+                    Sync imports PS4/PS5 purchased games and fills in trophy
+                    progress for titles that appear on your trophy list.
+                  </p>
+                ) : (
+                  <form action={connectPlayStationAction} className="grid gap-4">
+                    <div className="grid gap-3 border-y border-dashed border-ink/25 py-3.5">
+                      <p className="text-sm font-bold leading-relaxed">
+                        This sync imports PS4/PS5 purchased games and titles
+                        that appear in your trophy list, then attaches them to
+                        the canonical catalog.
+                      </p>
+                      <ol className="grid gap-2.5 text-sm text-ink/75 leading-relaxed">
+                        <li>
+                          <strong>1.</strong>{" "}
+                          <a
+                            className="nav-link"
+                            href="https://my.playstation.com/"
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Sign in to PlayStation
+                          </a>{" "}
+                          in this browser.
+                        </li>
+                        <li>
+                          <strong>2.</strong>{" "}
+                          <a
+                            className="nav-link"
+                            href="https://ca.account.sony.com/api/v1/ssocookie"
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Open the NPSSO page
+                          </a>{" "}
+                          after sign-in.
+                        </li>
+                        <li>
+                          <strong>3.</strong> Copy only the value inside{" "}
+                          <code className="rounded-[6px] bg-ink/8 px-1.5 py-0.5 font-mono text-[0.8em]">
+                            npsso
+                          </code>
+                          , paste it below, then connect.
+                        </li>
+                      </ol>
+                      <p className="text-xs font-bold text-ink/60 leading-relaxed">
+                        Treat NPSSO like a temporary login secret. filazo
+                        exchanges it for PlayStation API tokens and does not
+                        store the NPSSO itself.
+                      </p>
+                    </div>
+                    <label className="grid gap-2">
+                      <span className="font-medium">NPSSO token</span>
+                      <input
+                        className="min-h-11 px-3 border-3 border-ink rounded-[16px] bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
+                        name="npsso"
+                        type="password"
+                        autoComplete="off"
+                        placeholder="Paste npsso value only"
+                        required
+                      />
+                    </label>
+                    <button className="btn btn-primary" type="submit">
+                      Connect PlayStation
+                    </button>
+                  </form>
+                )}
+              </div>
+            </article>
+
+            <article className="panel">
+              <div className="flex items-center justify-between gap-3.5 mb-[22px] max-lg:flex-col max-lg:items-start">
+                <div>
+                  <span className="section-label">CSV and PlayStation</span>
                   <h2 className="text-[clamp(1.5rem,3vw,2.2rem)] leading-[1.05]">
                     Bring in backlog exports
                   </h2>
@@ -586,11 +736,12 @@ export default async function ProfilePage({
               </p>
             </div>
             {profile.steamAccount ? (
-              <form action={syncSteamLibraryAction}>
-                <button className="btn btn-primary" type="submit">
-                  Sync Steam library
-                </button>
-              </form>
+              <SyncActionForm
+                action={syncSteamLibraryAction}
+                buttonLabel="Sync Steam library"
+                pendingLabel="Syncing Steam..."
+                pendingNotice="Steam sync is running. Keep this page open until the library refresh finishes."
+              />
             ) : (
               <a className="btn btn-primary" href="/api/auth/steam">
                 Connect Steam
@@ -602,11 +753,12 @@ export default async function ProfilePage({
           {gamesView === "list" ? (
             <section className="panel !p-0 overflow-hidden">
               {/* Table header */}
-              <div className="grid grid-cols-[1fr_minmax(0,0.38fr)_minmax(0,0.36fr)_minmax(0,0.4fr)_minmax(0,0.46fr)_minmax(0,0.42fr)_44px] gap-3 px-5 py-3 bg-ink text-white text-[0.72rem] font-bold uppercase tracking-widest max-md:grid-cols-[1fr_minmax(0,0.5fr)_44px] max-md:gap-2">
+              <div className="grid grid-cols-[1fr_minmax(0,0.32fr)_minmax(0,0.32fr)_minmax(0,0.36fr)_minmax(0,0.36fr)_minmax(0,0.38fr)_minmax(0,0.38fr)_44px] gap-3 px-5 py-3 bg-ink text-white text-[0.72rem] font-bold uppercase tracking-widest max-md:grid-cols-[1fr_minmax(0,0.5fr)_44px] max-md:gap-2">
                 <span>Title</span>
                 <span>Platform</span>
                 <span className="max-md:hidden">Status</span>
                 <span className="max-md:hidden">Playtime</span>
+                <span className="max-md:hidden">Time left</span>
                 <span className="max-md:hidden">Last played</span>
                 <span className="max-md:hidden">Completion</span>
                 <span className="sr-only">Favorite</span>
@@ -615,9 +767,12 @@ export default async function ProfilePage({
               {gameEntries.length ? (
                 <div className="divide-y divide-ink/10">
                   {gameEntries.map(
-                    (entry) => (
+                    (entry) => {
+                      const remainingTime = estimateRemainingTime(entry);
+
+                      return (
                       <div
-                        className="grid scroll-mt-6 grid-cols-[1fr_minmax(0,0.38fr)_minmax(0,0.36fr)_minmax(0,0.4fr)_minmax(0,0.46fr)_minmax(0,0.42fr)_44px] gap-3 px-5 py-2.5 items-center hover:bg-yellow/10 target:bg-cyan/20 transition-colors max-md:grid-cols-[1fr_minmax(0,0.5fr)_44px] max-md:gap-2"
+                        className="grid scroll-mt-6 grid-cols-[1fr_minmax(0,0.32fr)_minmax(0,0.32fr)_minmax(0,0.36fr)_minmax(0,0.36fr)_minmax(0,0.38fr)_minmax(0,0.38fr)_44px] gap-3 px-5 py-2.5 items-center hover:bg-yellow/10 target:bg-cyan/20 transition-colors max-md:grid-cols-[1fr_minmax(0,0.5fr)_44px] max-md:gap-2"
                         id={`entry-${entry.id}`}
                         key={`list-${entry.id}`}
                       >
@@ -671,6 +826,19 @@ export default async function ProfilePage({
                           {formatPlaytime(entry.playtimeMinutes)}
                         </span>
 
+                        <span
+                          className="text-xs font-bold text-ink/70 max-md:hidden"
+                          title={
+                            remainingTime
+                              ? `Based on HLTB ${remainingTime.targetLabel}`
+                              : "No HLTB estimate yet"
+                          }
+                        >
+                          {remainingTime
+                            ? formatRemainingTime(remainingTime.remainingMinutes)
+                            : "Unknown"}
+                        </span>
+
                         <span className="text-xs text-ink/60 max-md:hidden">
                           {formatLastPlayed(entry.lastPlayedAt)}
                         </span>
@@ -712,7 +880,8 @@ export default async function ProfilePage({
                           </button>
                         </form>
                       </div>
-                    ),
+                      );
+                    },
                   )}
                 </div>
               ) : (
@@ -732,7 +901,10 @@ export default async function ProfilePage({
               {gameEntries.length ? (
                 <div className="grid grid-cols-5 gap-4 max-lg:grid-cols-4 max-md:grid-cols-3 max-sm:grid-cols-2">
                   {gameEntries.map(
-                    (entry) => (
+                    (entry) => {
+                      const remainingTime = estimateRemainingTime(entry);
+
+                      return (
                       <div
                         className="group relative scroll-mt-6 rounded-[20px] overflow-hidden border-3 border-ink bg-white shadow-hard-sm target:bg-cyan/20 hover:shadow-hard hover:-translate-y-1.5 transition-all duration-200"
                         id={`entry-${entry.id}`}
@@ -775,6 +947,16 @@ export default async function ProfilePage({
                               {entry.playtimeMinutes && entry.playtimeMinutes > 0 ? (
                                 <span className="text-[0.65rem] text-white/70">
                                   {formatPlaytime(entry.playtimeMinutes)}
+                                </span>
+                              ) : null}
+                              {remainingTime ? (
+                                <span
+                                  className="rounded-full bg-white/15 px-2 py-px text-[0.65rem] font-bold text-white/85"
+                                  title={`Based on HLTB ${remainingTime.targetLabel}`}
+                                >
+                                  {formatRemainingTime(
+                                    remainingTime.remainingMinutes,
+                                  )}
                                 </span>
                               ) : null}
                               {entry.lastPlayedAt ? (
@@ -833,7 +1015,8 @@ export default async function ProfilePage({
                           </button>
                         </form>
                       </div>
-                    ),
+                      );
+                    },
                   )}
                 </div>
               ) : (

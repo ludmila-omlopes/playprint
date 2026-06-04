@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { AssistantProfileData } from "@/lib/assistant/queries";
+import { estimateRemainingTime } from "@/lib/time-estimates";
+import { formatRemainingTime } from "@/lib/utils";
 
 type Insight = AssistantProfileData["insights"][number];
 
@@ -49,6 +51,7 @@ function readGenres(genres: Insight["userGameEntry"]["game"]["genres"]) {
 export function GameFrictionCard({ insight }: { insight: Insight }) {
   const reasons = readReasons(insight.reasons);
   const genres = readGenres(insight.userGameEntry.game.genres);
+  const remainingTime = estimateRemainingTime(insight.userGameEntry);
 
   return (
     <Link
@@ -75,6 +78,14 @@ export function GameFrictionCard({ insight }: { insight: Insight }) {
             </span>
           ))}
         </div>
+      ) : null}
+      {remainingTime ? (
+        <p
+          className="mt-3 inline-flex rounded-full border-2 border-ink bg-lime/30 px-2.5 py-0.5 text-xs font-black uppercase tracking-wide"
+          title={`Based on HLTB ${remainingTime.targetLabel}`}
+        >
+          {formatRemainingTime(remainingTime.remainingMinutes)}
+        </p>
       ) : null}
       {reasons.length ? (
         <p className="mt-3 text-sm leading-relaxed text-ink/75">

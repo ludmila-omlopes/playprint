@@ -5,8 +5,15 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function normalizeTitle(value: string) {
+export function cleanGameTitle(value: string) {
   return value
+    .replace(/[™®©]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function normalizeTitle(value: string) {
+  return cleanGameTitle(value)
     .normalize("NFKD")
     .replace(/[^\w\s-]/g, "")
     .replace(/\s+/g, " ")
@@ -61,6 +68,18 @@ export function formatTimeEstimate(minutes: number | null | undefined) {
   }
 
   return `${Math.round(hours)}h`;
+}
+
+export function formatRemainingTime(minutes: number | null | undefined) {
+  if (minutes === null || minutes === undefined) {
+    return "Unknown";
+  }
+
+  if (minutes < 1) {
+    return "Done";
+  }
+
+  return `~${formatTimeEstimate(minutes)} left`;
 }
 
 export function formatCompletionPercent(value: number | null | undefined) {

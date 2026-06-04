@@ -5,7 +5,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import { DatabaseSync } from "node:sqlite";
-import { Prisma } from "@prisma/client";
+import { EntrySource, ExternalProvider, Prisma } from "@prisma/client";
 
 test("generated Prisma client includes synced Steam user game fields", () => {
   const model = Prisma.dmmf.datamodel.models.find(
@@ -43,8 +43,26 @@ test("generated Prisma client includes synced Steam user game fields", () => {
     gameModel.fields.some((field) => field.name === "hltbCompletionistMinutes"),
     "Run npm run db:generate after changing prisma/schema.prisma.",
   );
+  assert.ok(
+    gameModel.fields.some((field) => field.name === "metacriticScore"),
+    "Run npm run db:generate after changing prisma/schema.prisma.",
+  );
+  assert.ok(
+    gameModel.fields.some((field) => field.name === "metacriticUrl"),
+    "Run npm run db:generate after changing prisma/schema.prisma.",
+  );
   assert.ok(insightModel, "UserGameInsight model should exist.");
   assert.ok(AssistantRunModel, "AssistantRun model should exist.");
+  assert.equal(
+    ExternalProvider.PLAYSTATION,
+    "PLAYSTATION",
+    "Run npm run db:generate after adding PlayStation to prisma/schema.prisma.",
+  );
+  assert.equal(
+    EntrySource.PLAYSTATION,
+    "PLAYSTATION",
+    "Run npm run db:generate after adding PlayStation sync to prisma/schema.prisma.",
+  );
 });
 
 test("SQLite bootstrap creates synced Steam user game columns", () => {
@@ -83,6 +101,9 @@ test("SQLite bootstrap creates synced Steam user game columns", () => {
       assertTableHasColumn(db, "Game", "hltbMainExtraMinutes");
       assertTableHasColumn(db, "Game", "hltbCompletionistMinutes");
       assertTableHasColumn(db, "Game", "hltbUpdatedAt");
+      assertTableHasColumn(db, "Game", "metacriticScore");
+      assertTableHasColumn(db, "Game", "metacriticUrl");
+      assertTableHasColumn(db, "Game", "metacriticUpdatedAt");
     } finally {
       db.close();
     }

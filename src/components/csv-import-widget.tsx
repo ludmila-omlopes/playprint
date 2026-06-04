@@ -13,6 +13,8 @@ type ColumnMapping = {
   externalId: string;
 };
 
+type ImportSource = "GENERIC" | "PLAYSTATION";
+
 const fieldOptions: Array<{
   key: keyof ColumnMapping;
   label: string;
@@ -38,12 +40,21 @@ function createInitialMapping(headers: string[]): ColumnMapping {
 
   return {
     title: findHeader(["title", "name", "game"]),
-    platform: findHeader(["platform", "store"]),
+    platform: findHeader(["platform", "store", "console"]),
     status: findHeader(["status", "state"]),
     playtimeHours: findHeader(["hours", "playtime"]),
     completionPercent: findHeader(["completion", "complete", "progress", "%"]),
     notes: findHeader(["note", "review", "comment"]),
-    externalId: findHeader(["id", "appid"]),
+    externalId: findHeader([
+      "id",
+      "appid",
+      "np title",
+      "nptitle",
+      "concept",
+      "product",
+      "service",
+      "psn",
+    ]),
   };
 }
 
@@ -56,6 +67,7 @@ export function CsvImportWidget({
   const [csvText, setCsvText] = useState("");
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<Record<string, string>[]>([]);
+  const [source, setSource] = useState<ImportSource>("GENERIC");
   const [mapping, setMapping] = useState<ColumnMapping>({
     title: "",
     platform: "",
@@ -66,6 +78,14 @@ export function CsvImportWidget({
     externalId: "",
   });
   const [error, setError] = useState("");
+  const serializedMapping = useMemo(
+    () =>
+      JSON.stringify({
+        ...mapping,
+        provider: source === "PLAYSTATION" ? "PLAYSTATION" : undefined,
+      }),
+    [mapping, source],
+  );
 
   const previewRows = useMemo(() => {
     if (!rows.length || !mapping.title) {
@@ -132,7 +152,8 @@ export function CsvImportWidget({
           className="w-full file:mr-3 file:px-4 file:py-2 file:border-3 file:border-ink file:rounded-pill file:bg-yellow file:font-bold file:cursor-pointer hover:file:bg-peach file:transition-colors"
         />
         <p className="text-ink/70 mt-2 text-sm leading-relaxed">
-          Supports generic exports. We will map your columns before import.
+          Supports generic and PlayStation exports. We will map your columns
+          before import.
         </p>
       </div>
 
@@ -148,7 +169,21 @@ export function CsvImportWidget({
         <form action={action} className="grid gap-[18px]">
           <input type="hidden" name="fileName" value={fileName} />
           <input type="hidden" name="csvText" value={csvText} />
-          <input type="hidden" name="mapping" value={JSON.stringify(mapping)} />
+          <input type="hidden" name="mapping" value={serializedMapping} />
+
+          <label className="grid gap-2">
+            <span className="font-medium">Import source</span>
+            <select
+              value={source}
+              onChange={(event) =>
+                setSource(event.target.value as ImportSource)
+              }
+              className="min-h-11 px-3 border-3 border-ink rounded-[16px] bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
+            >
+              <option value="GENERIC">Generic CSV</option>
+              <option value="PLAYSTATION">PlayStation CSV</option>
+            </select>
+          </label>
 
           <div className="grid grid-cols-2 gap-3.5 max-lg:grid-cols-1">
             {fieldOptions.map((field) => (
@@ -181,6 +216,12 @@ export function CsvImportWidget({
 
           <div className="grid gap-2.5" aria-live="polite">
             <div className="section-label">Preview</div>
+            {source === "PLAYSTATION" ? (
+              <p className="text-sm font-bold text-ink/70">
+                PlayStation rows will be attached as PlayStation provider
+                entries. External IDs are used as provider links when mapped.
+              </p>
+            ) : null}
             {previewRows.length ? (
               previewRows.map((row, index) => (
                 <div

@@ -74,6 +74,20 @@ test("completed games are excluded from active backlog recommendations", () => {
   assert.equal(insights.length, 0);
 });
 
+test("short HLTB remaining time can make a game finishable soon", () => {
+  const insights = scoreBacklogEntries([
+    createEntry({
+      name: "Almost Short",
+      playtimeMinutes: 600,
+      hltbMainExtraMinutes: 840,
+    }),
+  ], now);
+
+  assert.ok(
+    insights.some((insight) => insight.signalType === AssistantSignalType.FINISHABLE_SOON),
+  );
+});
+
 test("wishlist game similar to untouched owned games gets wishlist risk", () => {
   const insights = scoreBacklogEntries([
     createEntry({ name: "Wanted RPG", status: UserGameStatus.WISHLIST, genres: ["RPG"] }),
@@ -119,6 +133,9 @@ function createEntry({
   isFavorite = false,
   activeBacklog = true,
   genres = [],
+  hltbMainStoryMinutes = null,
+  hltbMainExtraMinutes = null,
+  hltbCompletionistMinutes = null,
 }) {
   return {
     id: name.toLowerCase().replaceAll(" ", "-"),
@@ -135,6 +152,9 @@ function createEntry({
       genres,
       platforms: [],
       aggregatedRating: null,
+      hltbMainStoryMinutes,
+      hltbMainExtraMinutes,
+      hltbCompletionistMinutes,
     },
   };
 }

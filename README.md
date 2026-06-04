@@ -5,11 +5,14 @@ It is designed around a canonical local game catalog that can absorb data from m
 
 - Steam account sign-in and owned library sync
 - CSV imports for backlog and wishlist exports
+- PlayStation NPSSO-based sync for PS4/PS5 purchased games and played trophy titles
+- PlayStation CSV imports for library and backlog data
 - IGDB metadata enrichment for covers, release dates, platforms, screenshots, and ratings
 - HowLongToBeat completion-time enrichment for main story, main + extras, and completionist estimates
+- Metacritic metascore enrichment when Steam Store metadata exposes a score
 - Optional rule-based and AI-assisted backlog assistance
 
-The current app already includes a landing page, a collector profile, Steam authentication, Steam sync, CSV mapping/import, and per-game catalog pages.
+The current app already includes a landing page, a collector profile, Steam authentication, Steam sync, PlayStation library sync, CSV mapping/import, and per-game catalog pages.
 
 ## Stack
 
@@ -24,12 +27,13 @@ The current app already includes a landing page, a collector profile, Steam auth
 
 The app is centered on a canonical `Game` record.
 
-- `Game` stores the normalized catalog entry and any IGDB metadata
+- `Game` stores the normalized catalog entry plus shared IGDB, HLTB, and Metacritic metadata
 - `GameProviderLink` links a canonical game to an external provider ID like a Steam app ID
 - `UserGameEntry` stores user ownership, wishlist state, playtime, last played date, and completion percentage for a game
 - `UserGameInsight` stores per-game assistant signals such as untouched, sampled-dropped, wishlist risk, and release candidates
 - `AssistantRun` stores each assistant refresh summary and optional AI output metadata
 - `ExternalAccount` stores connected provider accounts like Steam
+- PlayStation refresh tokens are encrypted in `ExternalAccount.metadata`; NPSSO values are exchanged and then discarded
 - `ImportJob` and `ImportRow` keep an audit trail of CSV imports
 
 This means multiple providers can eventually point to the same internal game instead of creating duplicate records.
@@ -38,9 +42,13 @@ This means multiple providers can eventually point to the same internal game ins
 
 - Steam OpenID sign-in
 - Steam owned games sync with playtime, last played date, and achievement-based completion percentages when Steam exposes the data
+- PlayStation connection through NPSSO with sync for PS4/PS5 purchased games, played trophy titles, and trophy progress
 - CSV upload with in-browser column mapping for titles, status, playtime, completion percentage, notes, and external IDs
+- PlayStation CSV mode that stores entries as PlayStation provider data and links mapped external IDs through `GameProviderLink`
 - IGDB best-match enrichment during imports and sync
 - Best-effort HowLongToBeat enrichment during imports and sync
+- Estimated time remaining for user entries when HLTB data and playtime or progress are available
+- Best-effort Metacritic score capture for Steam-linked catalog records
 - Collector profile page with owned and wishlist sections
 - Canonical game detail pages
 - Assistant tab with backlog friction insights, play-next picks, release candidates, and buy-decision guidance
@@ -55,7 +63,9 @@ Optional, depending on what you want to use:
 - Steam Web API key for owned library sync
 - IGDB client credentials for metadata enrichment
 
+PlayStation imports use CSV files and do not require credentials.
 HowLongToBeat enrichment uses an unofficial website-backed lookup and does not require credentials.
+Metacritic scores are collected only when public Steam Store app metadata includes a metascore and URL.
 
 ## Environment Variables
 
@@ -63,7 +73,7 @@ Copy `.env.example` to `.env` and fill in what you need.
 
 ```env
 DATABASE_URL="file:./dev.db"
-APP_URL="http://localhost:3000"
+APP_URL="http://localhost:3001"
 AUTH_SECRET="replace-with-a-long-random-string"
 
 # Steam
@@ -84,8 +94,10 @@ Notes:
 - `DATABASE_URL` is required for catalog features. The default SQLite value is
   intended for local development.
 - `STEAM_API_KEY` is required for owned library sync. Steam sign-in itself uses OpenID.
+- PlayStation sync does not require an app key. Users provide an NPSSO token in the profile page; the app exchanges it for PlayStation API tokens, stores encrypted refresh/access tokens, and does not store the NPSSO.
 - IGDB enrichment is optional. If IGDB credentials are missing, the app still works, but imported/synced games stay with local metadata only.
 - HowLongToBeat enrichment is optional and best-effort. If the website-backed search is unavailable, imports and Steam sync continue without completion-time estimates.
+- Metacritic enrichment is optional and best-effort. If Steam Store app metadata does not expose a Metacritic score, the canonical game keeps an empty metascore.
 - The Assistant tab works without AI. If `OPENAI_API_KEY` is set, the app can use OpenAI's Responses API to turn rule-based insights into short explanations. Only library summaries, selected game metadata, and rule outputs are sent.
 
 ## Getting Started
@@ -116,7 +128,7 @@ npm run db:generate
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+Open `http://localhost:3001`.
 
 ## Database Notes
 
@@ -175,17 +187,27 @@ sync after Steam sign-in.
 4. The callback verifies the OpenID response, creates or reuses a local user, stores the Steam account, and sets a signed session cookie.
 5. From the profile page, the user can run a Steam sync to fetch owned games and attach them to canonical catalog entries.
 
-### CSV flow
+### PlayStation flow
+
+1. The user signs in to PlayStation in a browser and retrieves their NPSSO token.
+2. The profile page exchanges the NPSSO for PlayStation access and refresh tokens through `psn-api`.
+3. The app stores encrypted PlayStation API tokens in `ExternalAccount.metadata` and discards the NPSSO.
+4. From the profile page, the user can sync PS4/PS5 purchased games through `getPurchasedGames` and played trophy titles through `getUserTitles`.
+5. Each title is attached to a canonical `Game` with `PLAYSTATION` `GameProviderLink` records keyed by available IDs such as `titleId`, `productId`, `conceptId`, `entitlementId`, and `npCommunicationId`.
+6. Trophy progress is stored as `UserGameEntry.completionPercent` when PSN exposes it.
+
+### CSV and PlayStation import flow
 
 1. The user uploads a CSV on the profile page.
-2. The browser parses the file and shows a column-mapping UI.
+2. The browser parses the file and shows a source selector plus column-mapping UI.
 3. A server action receives the raw CSV plus selected mappings.
 4. Each row is normalized into a canonical game resolution attempt.
-5. Import results are recorded in `ImportJob` and `ImportRow`.
+5. When PlayStation CSV is selected, `UserGameEntry.provider` is set to `PLAYSTATION`, the platform defaults to PlayStation when no platform column is mapped, and any mapped external ID is stored as a PlayStation `GameProviderLink`.
+6. Import results are recorded in `ImportJob` and `ImportRow`.
 
 ### Catalog resolution
 
-Whenever a game comes from Steam or CSV:
+Whenever a game comes from Steam, PlayStation sync, generic CSV, or PlayStation CSV:
 
 1. The app checks for an existing provider link when a provider ID is available.
 2. It checks for an existing game by normalized title.
@@ -196,7 +218,9 @@ Whenever a game comes from Steam or CSV:
 
 Steam sync stores `lastPlayedAt` from Steam's `rtime_last_played` field when Steam returns it. It also tries to calculate `completionPercent` from achievements by comparing unlocked achievements to the total achievements returned for each app. Both are best-effort: games without last-played data or Steam achievements, private or blocked stats, and temporary API failures are left untracked.
 
-HowLongToBeat stores completion estimates on the canonical `Game` as minutes and links the HLTB game ID through `GameProviderLink`. HLTB does not expose an official public API, so failures or search misses are ignored instead of blocking catalog resolution.
+HowLongToBeat stores completion estimates on the canonical `Game` as minutes and links the HLTB game ID through `GameProviderLink`. HLTB does not expose an official public API, so failures or search misses are ignored instead of blocking catalog resolution. User entries estimate remaining time from the default HLTB target, preferring main + extras, then main story, then completionist; completion percentage is used first, otherwise recorded playtime is subtracted.
+
+Metacritic stores the critic metascore on the canonical `Game` and links the Metacritic URL through `GameProviderLink` when Steam Store metadata provides it. This avoids scraping Metacritic directly and keeps missing scores non-blocking.
 
 ### Assistant flow
 
@@ -221,7 +245,9 @@ src/
     catalog.ts                Catalog resolution, sync, import logic
     assistant/                    Backlog scoring, AI summaries, and buy decisions
     hltb.ts                   HowLongToBeat best-effort completion-time search
+    metacritic.ts             Metacritic score lookup via Steam Store metadata
     igdb.ts                   IGDB auth, search, and ranking
+    playstation.ts            PlayStation NPSSO token exchange and library sync
     prisma.ts                 Prisma client singleton
     session.ts                Signed cookie session helpers
     steam.ts                  Steam OpenID and Steam Web API integration

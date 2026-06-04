@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ExternalProvider } from "@prisma/client";
 import { getGameBySlug } from "@/lib/catalog";
 import { ScreenshotLightbox } from "@/components/screenshot-lightbox";
 import {
@@ -7,8 +8,10 @@ import {
   formatDate,
   formatNumber,
   formatPlaytime,
+  formatRemainingTime,
   formatTimeEstimate,
 } from "@/lib/utils";
+import { estimateRemainingTime } from "@/lib/time-estimates";
 
 export async function generateMetadata({
   params,
@@ -51,7 +54,14 @@ export default async function GamePage({
   const hasRating =
     game.aggregatedRating !== null && game.aggregatedRating !== undefined;
   const ratingValue = hasRating ? Math.round(game.aggregatedRating!) : 0;
-  const hltbLink = game.providerLinks.find((link) => link.provider === "HLTB");
+  const hltbLink = game.providerLinks.find(
+    (link) => link.provider === ExternalProvider.HLTB,
+  );
+  const metacriticLink = game.providerLinks.find(
+    (link) => link.provider === ExternalProvider.METACRITIC,
+  );
+  const hasMetacritic =
+    game.metacriticScore !== null && game.metacriticScore !== undefined;
   const hasCompletionTimes = Boolean(
     game.hltbMainStoryMinutes ||
       game.hltbMainExtraMinutes ||
@@ -161,6 +171,28 @@ export default async function GamePage({
                   </div>
                 </div>
               ) : null}
+              {hasMetacritic ? (
+                <div className="flex items-center gap-2">
+                  <div
+                    className={cn(
+                      "w-10 h-10 rounded-[12px] grid place-items-center font-display text-sm border-2",
+                      game.metacriticScore! >= 75
+                        ? "bg-lime/90 border-lime text-ink"
+                        : game.metacriticScore! >= 50
+                          ? "bg-yellow/90 border-yellow text-ink"
+                          : "bg-peach/90 border-peach text-white",
+                    )}
+                  >
+                    {game.metacriticScore}
+                  </div>
+                  <div className="text-xs text-white/60 leading-tight">
+                    <span className="block text-white/80 font-semibold">
+                      Metacritic
+                    </span>
+                    metascore
+                  </div>
+                </div>
+              ) : null}
               <div className="text-xs text-white/60 leading-tight">
                 <span className="block text-white/80 font-semibold">
                   Released
@@ -227,11 +259,17 @@ export default async function GamePage({
 
             {game.userEntries.length ? (
               <div className="grid gap-2.5">
-                {game.userEntries.map((entry) => (
-                  <div
-                    className="flex items-center gap-4 p-3.5 rounded-[16px] bg-white border-2 border-ink/10 hover:border-ink/25 transition-colors"
-                    key={entry.id}
-                  >
+                {game.userEntries.map((entry) => {
+                  const remainingTime = estimateRemainingTime({
+                    ...entry,
+                    game,
+                  });
+
+                  return (
+                    <div
+                      className="flex items-center gap-4 p-3.5 rounded-[16px] bg-white border-2 border-ink/10 hover:border-ink/25 transition-colors"
+                      key={entry.id}
+                    >
                     {/* Avatar placeholder */}
                     <div className="w-9 h-9 flex-none rounded-full bg-gradient-to-br from-yellow/60 to-peach/60 border-2 border-ink/15 grid place-items-center font-display text-xs">
                       {(entry.user.displayName ?? "C").slice(0, 1)}
@@ -243,6 +281,14 @@ export default async function GamePage({
                       <span className="text-xs text-ink/50">
                         {formatPlaytime(entry.playtimeMinutes)}
                       </span>
+                      {remainingTime ? (
+                        <span
+                          className="ml-2 text-xs font-bold text-ink/70"
+                          title={`Based on HLTB ${remainingTime.targetLabel}`}
+                        >
+                          {formatRemainingTime(remainingTime.remainingMinutes)}
+                        </span>
+                      ) : null}
                     </div>
                     <span
                       className={cn(
@@ -256,8 +302,9 @@ export default async function GamePage({
                     >
                       {entry.status.toLowerCase()}
                     </span>
-                  </div>
-                ))}
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div className="p-6 text-center rounded-[18px] bg-paper/60 border-2 border-dashed border-ink/15">
@@ -288,6 +335,14 @@ export default async function GamePage({
                 <dt className="text-ink/50">Rating</dt>
                 <dd className="font-semibold text-right">
                   {hasRating ? `${ratingValue} / 100` : "No rating"}
+                </dd>
+              </div>
+              <div className="h-px bg-ink/8" />
+
+              <div className="flex items-start justify-between gap-3">
+                <dt className="text-ink/50">Metacritic</dt>
+                <dd className="font-semibold text-right">
+                  {hasMetacritic ? `${game.metacriticScore} / 100` : "No score"}
                 </dd>
               </div>
               <div className="h-px bg-ink/8" />
@@ -379,6 +434,39 @@ export default async function GamePage({
             </dl>
           </div>
 
+          <div className="panel !p-5">
+            <div className="flex items-start justify-between gap-3">
+              <span className="section-label !mb-0">Metacritic</span>
+              {(metacriticLink?.storeUrl ?? game.metacriticUrl) ? (
+                <a
+                  href={metacriticLink?.storeUrl ?? game.metacriticUrl ?? "#"}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs font-bold uppercase tracking-wide text-ink/55 hover:text-ink"
+                >
+                  View
+                </a>
+              ) : null}
+            </div>
+            <div className="mt-4 flex items-end justify-between gap-3">
+              <div>
+                <p className="text-sm text-ink/50">Metascore</p>
+                <p className="text-xs text-ink/50">
+                  Best-effort from Steam Store metadata
+                </p>
+              </div>
+              <strong className="font-display text-4xl leading-none">
+                {hasMetacritic ? game.metacriticScore : "--"}
+              </strong>
+            </div>
+            <p className="mt-3 text-xs text-ink/50">
+              Updated:{" "}
+              {hasMetacritic
+                ? formatDate(game.metacriticUpdatedAt)
+                : "Not collected"}
+            </p>
+          </div>
+
           {/* Stats mini-cards */}
           <div className="grid grid-cols-2 gap-3">
             <div className="p-4 bg-lime/20 border-3 border-ink rounded-[18px] text-center">
@@ -415,11 +503,15 @@ export default async function GamePage({
                     <span className="w-7 h-7 flex-none grid place-items-center rounded-[8px] bg-ink/5 text-[0.65rem] font-display uppercase">
                       {link.provider.slice(0, 2)}
                     </span>
-                    {link.provider === "STEAM"
+                    {link.provider === ExternalProvider.STEAM
                       ? "Steam Store"
-                      : link.provider === "HLTB"
+                      : link.provider === ExternalProvider.HLTB
                         ? "HowLongToBeat"
-                        : link.provider}
+                        : link.provider === ExternalProvider.METACRITIC
+                          ? "Metacritic"
+                          : link.provider === ExternalProvider.PLAYSTATION
+                            ? "PlayStation"
+                            : link.provider}
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5 ml-auto text-ink/30">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                     </svg>

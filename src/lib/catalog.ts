@@ -9,9 +9,16 @@ import {
 import Papa from "papaparse";
 import { hltbAdapter } from "@/lib/hltb";
 import { igdbAdapter } from "@/lib/igdb";
+import { metacriticAdapter } from "@/lib/metacritic";
+import { syncPlayStationLibraryForAccount } from "@/lib/playstation";
 import { prisma } from "@/lib/prisma";
 import { getSteamStoreArtwork, steamAdapter } from "@/lib/steam";
-import { normalizeTitle, slugify, uniqueSlug } from "@/lib/utils";
+import {
+  cleanGameTitle,
+  normalizeTitle,
+  slugify,
+  uniqueSlug,
+} from "@/lib/utils";
 
 type ResolveGameInput = {
   title: string;
@@ -30,6 +37,7 @@ export type CsvColumnMapping = {
   completionPercent?: string;
   notes?: string;
   externalId?: string;
+  provider?: "PLAYSTATION";
 };
 
 type NormalizedImportRow = {
@@ -181,8 +189,50 @@ async function applyCompletionTimesToGame(
   return game;
 }
 
+async function applyReviewScoreToGame(
+  gameId: string,
+  reviewScore: Awaited<ReturnType<typeof metacriticAdapter.searchBestMatch>>,
+) {
+  if (!reviewScore) {
+    return prisma.game.findUniqueOrThrow({ where: { id: gameId } });
+  }
+
+  const game = await prisma.game.update({
+    where: { id: gameId },
+    data: {
+      metacriticScore: reviewScore.score,
+      metacriticUrl: reviewScore.url ?? undefined,
+      metacriticUpdatedAt: new Date(),
+    },
+  });
+
+  await prisma.gameProviderLink.upsert({
+    where: {
+      provider_providerGameId: {
+        provider: ExternalProvider.METACRITIC,
+        providerGameId: reviewScore.providerGameId,
+      },
+    },
+    update: {
+      gameId: game.id,
+      storeUrl: reviewScore.url ?? undefined,
+      rawData: reviewScore.rawData as Prisma.InputJsonValue | undefined,
+    },
+    create: {
+      gameId: game.id,
+      provider: ExternalProvider.METACRITIC,
+      providerGameId: reviewScore.providerGameId,
+      storeUrl: reviewScore.url ?? undefined,
+      rawData: reviewScore.rawData as Prisma.InputJsonValue | undefined,
+    },
+  });
+
+  return game;
+}
+
 export async function resolveCatalogGame(input: ResolveGameInput) {
   const normalizedTitle = normalizeTitle(input.title);
+  const searchTitle = cleanGameTitle(input.title);
   let game:
     | Awaited<ReturnType<typeof prisma.game.findFirst>>
     | Awaited<ReturnType<typeof prisma.game.findUnique>>
@@ -215,7 +265,7 @@ export async function resolveCatalogGame(input: ResolveGameInput) {
   }
 
   const metadata = await igdbAdapter.searchBestMatch({
-    title: input.title,
+    title: searchTitle,
     platformName: input.platformName,
   });
 
@@ -229,8 +279,15 @@ export async function resolveCatalogGame(input: ResolveGameInput) {
   }
 
   const completionTimes = await hltbAdapter.searchBestMatch({
-    title: metadata?.name ?? input.title,
+    title: cleanGameTitle(metadata?.name ?? input.title),
     platformName: input.platformName,
+  });
+  const reviewScore = await metacriticAdapter.searchBestMatch({
+    title: cleanGameTitle(metadata?.name ?? input.title),
+    steamAppId:
+      input.provider === ExternalProvider.STEAM
+        ? input.providerGameId
+        : null,
   });
 
   if (completionTimes?.hltbId) {
@@ -270,6 +327,14 @@ export async function resolveCatalogGame(input: ResolveGameInput) {
       !game.hltbCompletionistMinutes)
   ) {
     game = await applyCompletionTimesToGame(game.id, completionTimes);
+  }
+
+  if (
+    reviewScore &&
+    (game.metacriticScore !== reviewScore.score ||
+      game.metacriticUrl !== reviewScore.url)
+  ) {
+    game = await applyReviewScoreToGame(game.id, reviewScore);
   }
 
   if (input.provider && input.providerGameId) {
@@ -391,6 +456,100 @@ export async function syncSteamLibraryForUser(userId: string) {
   };
 }
 
+export async function syncPlayStationLibraryForUser(userId: string) {
+  const playStationAccount = await prisma.externalAccount.findFirst({
+    where: {
+      userId,
+      provider: ExternalProvider.PLAYSTATION,
+    },
+  });
+
+  if (!playStationAccount) {
+    throw new Error("Connect PlayStation before syncing your played catalog.");
+  }
+
+  const { profile, games } = await syncPlayStationLibraryForAccount(
+    playStationAccount,
+  );
+
+  let syncedCount = 0;
+
+  for (const syncedGame of games) {
+    const providerGameIds = Array.from(
+      new Set([syncedGame.providerGameId, ...(syncedGame.providerGameIds ?? [])]),
+    );
+    const game = await resolveCatalogGame({
+      title: syncedGame.title,
+      platformName: syncedGame.platformName,
+      provider: ExternalProvider.PLAYSTATION,
+      providerGameId: syncedGame.providerGameId,
+      storeUrl: syncedGame.storeUrl,
+      rawData: syncedGame.rawData,
+    });
+
+    for (const providerGameId of providerGameIds) {
+      await prisma.gameProviderLink.upsert({
+        where: {
+          provider_providerGameId: {
+            provider: ExternalProvider.PLAYSTATION,
+            providerGameId,
+          },
+        },
+        update: {
+          gameId: game.id,
+          storeUrl: syncedGame.storeUrl ?? undefined,
+          rawData: syncedGame.rawData as Prisma.InputJsonValue | undefined,
+        },
+        create: {
+          gameId: game.id,
+          provider: ExternalProvider.PLAYSTATION,
+          providerGameId,
+          storeUrl: syncedGame.storeUrl ?? undefined,
+          rawData: syncedGame.rawData as Prisma.InputJsonValue | undefined,
+        },
+      });
+    }
+
+    await prisma.userGameEntry.upsert({
+      where: {
+        userId_gameId_status: {
+          userId,
+          gameId: game.id,
+          status: UserGameStatus.OWNED,
+        },
+      },
+      update: {
+        source: EntrySource.PLAYSTATION,
+        provider: ExternalProvider.PLAYSTATION,
+        externalAccountId: playStationAccount.id,
+        platformName: syncedGame.platformName ?? undefined,
+        completionPercent: syncedGame.completionPercent ?? null,
+        rawData: syncedGame.rawData as Prisma.InputJsonValue | undefined,
+        lastSyncedAt: new Date(),
+      },
+      create: {
+        userId,
+        gameId: game.id,
+        status: UserGameStatus.OWNED,
+        source: EntrySource.PLAYSTATION,
+        provider: ExternalProvider.PLAYSTATION,
+        externalAccountId: playStationAccount.id,
+        platformName: syncedGame.platformName ?? undefined,
+        completionPercent: syncedGame.completionPercent ?? null,
+        rawData: syncedGame.rawData as Prisma.InputJsonValue | undefined,
+        lastSyncedAt: new Date(),
+      },
+    });
+
+    syncedCount += 1;
+  }
+
+  return {
+    syncedCount,
+    profile,
+  };
+}
+
 function parseStatus(rawValue: unknown) {
   const normalized = String(rawValue ?? "")
     .trim()
@@ -435,6 +594,16 @@ function parseCompletionPercent(rawValue: unknown) {
       : numericValue;
 
   return Math.min(100, Math.max(0, Math.round(percent)));
+}
+
+function parseCsvImportProvider(
+  value: CsvColumnMapping["provider"],
+): ExternalProvider | null {
+  if (value === ExternalProvider.PLAYSTATION) {
+    return ExternalProvider.PLAYSTATION;
+  }
+
+  return null;
 }
 
 function normalizeCsvRows(
@@ -511,14 +680,22 @@ export async function importCsvForUser({
 
   try {
     const rows = normalizeCsvRows(csvText, mapping);
+    const importProvider = parseCsvImportProvider(mapping.provider);
+    const defaultPlatformName =
+      importProvider === ExternalProvider.PLAYSTATION ? "PlayStation" : null;
     let importedCount = 0;
     let failedCount = 0;
 
     for (const [index, row] of rows.entries()) {
       try {
+        const platformName = row.platformName ?? defaultPlatformName;
+        const providerGameId = importProvider ? row.externalId : null;
         const game = await resolveCatalogGame({
           title: row.title,
-          platformName: row.platformName,
+          platformName,
+          provider: importProvider ?? undefined,
+          providerGameId,
+          rawData: importProvider ? row.rawData : undefined,
         });
 
         await prisma.userGameEntry.upsert({
@@ -531,7 +708,8 @@ export async function importCsvForUser({
           },
           update: {
             source: EntrySource.CSV,
-            platformName: row.platformName ?? undefined,
+            provider: importProvider ?? undefined,
+            platformName: platformName ?? undefined,
             playtimeMinutes: row.playtimeMinutes ?? undefined,
             completionPercent: row.completionPercent ?? undefined,
             notes: row.notes ?? undefined,
@@ -542,7 +720,8 @@ export async function importCsvForUser({
             gameId: game.id,
             status: row.status,
             source: EntrySource.CSV,
-            platformName: row.platformName ?? undefined,
+            provider: importProvider ?? undefined,
+            platformName: platformName ?? undefined,
             playtimeMinutes: row.playtimeMinutes ?? undefined,
             completionPercent: row.completionPercent ?? undefined,
             notes: row.notes ?? undefined,
@@ -556,7 +735,7 @@ export async function importCsvForUser({
             rowIndex: index,
             rawData: row.rawData as Prisma.InputJsonValue,
             normalizedTitle: normalizeTitle(row.title),
-            platformName: row.platformName ?? undefined,
+            platformName: platformName ?? undefined,
             statusText: row.status,
             playtimeMinutes: row.playtimeMinutes ?? undefined,
             completionPercent: row.completionPercent ?? undefined,
@@ -680,19 +859,96 @@ export async function getProfileData(userId: string) {
       user.externalAccounts.find(
         (account) => account.provider === ExternalProvider.STEAM,
       ) ?? null,
+    playStationAccount:
+      user.externalAccounts.find(
+        (account) => account.provider === ExternalProvider.PLAYSTATION,
+      ) ?? null,
   };
 }
 
+const gameDetailInclude = {
+  providerLinks: true,
+  userEntries: {
+    include: {
+      user: true,
+    },
+  },
+} satisfies Prisma.GameInclude;
+
+async function enrichMissingGameDetailData(
+  game: Prisma.GameGetPayload<{ include: typeof gameDetailInclude }>,
+) {
+  const searchTitle = cleanGameTitle(game.name);
+  let enriched = false;
+
+  try {
+    if (!game.igdbId || !game.summary || !game.genres || !game.platforms) {
+      const metadata = await igdbAdapter.searchBestMatch({
+        title: searchTitle,
+      });
+
+      if (metadata) {
+        await applyMetadataToExistingGame(game.id, metadata);
+        enriched = true;
+      }
+    }
+
+    if (
+      !game.hltbMainStoryMinutes ||
+      !game.hltbMainExtraMinutes ||
+      !game.hltbCompletionistMinutes
+    ) {
+      const completionTimes = await hltbAdapter.searchBestMatch({
+        title: searchTitle,
+      });
+
+      if (completionTimes) {
+        await applyCompletionTimesToGame(game.id, completionTimes);
+        enriched = true;
+      }
+    }
+
+    if (game.metacriticScore === null) {
+      const steamLink = game.providerLinks.find(
+        (link) => link.provider === ExternalProvider.STEAM,
+      );
+      const reviewScore = await metacriticAdapter.searchBestMatch({
+        title: searchTitle,
+        steamAppId: steamLink?.providerGameId ?? null,
+      });
+
+      if (reviewScore) {
+        await applyReviewScoreToGame(game.id, reviewScore);
+        enriched = true;
+      }
+    }
+  } catch (error) {
+    console.warn("Could not enrich game detail data.", {
+      gameId: game.id,
+      error,
+    });
+  }
+
+  return enriched;
+}
+
 export async function getGameBySlug(slug: string) {
+  const game = await prisma.game.findUnique({
+    where: { slug },
+    include: gameDetailInclude,
+  });
+
+  if (!game) {
+    return game;
+  }
+
+  const enriched = await enrichMissingGameDetailData(game);
+  if (!enriched) {
+    return game;
+  }
+
   return prisma.game.findUnique({
     where: { slug },
-    include: {
-      providerLinks: true,
-      userEntries: {
-        include: {
-          user: true,
-        },
-      },
-    },
+    include: gameDetailInclude,
   });
 }
