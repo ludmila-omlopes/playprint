@@ -79,6 +79,15 @@ function SteamCompletionInfoIcon() {
   );
 }
 
+function formatAssistantCooldown(seconds: number) {
+  if (seconds <= 0) {
+    return "available now";
+  }
+
+  const minutes = Math.ceil(seconds / 60);
+  return minutes === 1 ? "in 1 minute" : `in ${minutes} minutes`;
+}
+
 export default async function ProfilePage({
   searchParams,
 }: PageProps<"/profile"> & { searchParams: ProfileSearchParams }) {
@@ -712,6 +721,27 @@ export default async function ProfilePage({
               </p>
               <p className="mt-1 text-xs text-ink/65">
                 AI explanations are optional. Rule-based scoring works without an API key.
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-bold">
+                <span className="rounded-full border-2 border-ink bg-paper/90 px-3 py-1">
+                  AI calls left today:{" "}
+                  {formatNumber(assistant.aiUsage.effectiveRemainingToday)}
+                </span>
+                <span className="rounded-full border-2 border-ink bg-paper/90 px-3 py-1">
+                  Your use: {formatNumber(assistant.aiUsage.userUsedToday)} /{" "}
+                  {formatNumber(assistant.aiUsage.userDailyLimit)}
+                </span>
+                <span className="rounded-full border-2 border-ink bg-paper/90 px-3 py-1">
+                  Next AI refresh:{" "}
+                  {assistant.aiUsage.openAiConfigured
+                    ? formatAssistantCooldown(
+                        assistant.aiUsage.cooldownRemainingSeconds,
+                      )
+                    : "API key missing"}
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-ink/60">
+                Cached OpenAI picks and rule-only refreshes do not spend AI calls.
               </p>
             </div>
             <form action={refreshAssistantInsightsAction}>
