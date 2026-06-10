@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { refreshAssistantInsightsForUser } from "@/lib/assistant/queries";
+import {
+  generatePlayerProfile,
+  savePlayerProfile,
+} from "@/lib/assistant/profile-agent";
 import { prisma } from "@/lib/prisma";
 import { getSessionUserId } from "@/lib/session";
 
@@ -37,6 +41,32 @@ export async function refreshAssistantInsightsAction() {
 
   revalidatePath("/profile");
   redirect(`/profile?tab=assistant&assistant=${insightCount}`);
+}
+
+export async function generatePlayerProfileAction() {
+  const userId = await getSessionUserId();
+  if (!userId) {
+    redirect("/profile?error=Sign%20in%20before%20generating%20a%20player%20profile.");
+  }
+
+  let result: Awaited<ReturnType<typeof generatePlayerProfile>>;
+  try {
+    result = await generatePlayerProfile(userId);
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Player profile generation failed.";
+    redirect(`/profile?error=${encodeURIComponent(message)}`);
+  }
+
+  if (result.status === "EMPTY") {
+    redirect("/profile?playerProfile=empty");
+  }
+
+  await savePlayerProfile(userId, result);
+  revalidatePath("/profile");
+  redirect("/profile?playerProfile=updated");
 }
 
 export async function updateGameIntentAction(formData: FormData) {

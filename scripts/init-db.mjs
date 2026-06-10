@@ -155,6 +155,20 @@ db.exec(`
     FOREIGN KEY ("userGameEntryId") REFERENCES "UserGameEntry"("id") ON DELETE CASCADE ON UPDATE CASCADE
   );
 
+  CREATE TABLE IF NOT EXISTS "PlayerProfile" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "summary" TEXT NOT NULL,
+    "profile" TEXT NOT NULL,
+    "toolTrace" TEXT,
+    "model" TEXT,
+    "status" TEXT NOT NULL,
+    "error" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE
+  );
+
   CREATE TABLE IF NOT EXISTS "AssistantRun" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
@@ -182,6 +196,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS "UserGameInsight_userId_signalType_idx" ON "UserGameInsight"("userId", "signalType");
   CREATE INDEX IF NOT EXISTS "UserGameInsight_userId_score_idx" ON "UserGameInsight"("userId", "score");
   CREATE INDEX IF NOT EXISTS "AssistantRun_userId_createdAt_idx" ON "AssistantRun"("userId", "createdAt");
+  CREATE UNIQUE INDEX IF NOT EXISTS "PlayerProfile_userId_key" ON "PlayerProfile"("userId");
 `);
 
 function columnExists(tableName, columnName) {

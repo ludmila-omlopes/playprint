@@ -34,6 +34,7 @@ The app is centered on a canonical `Game` record.
 - `UserGameEntry` stores user ownership, wishlist state, playtime, last played date, and completion percentage for a game
 - `UserGameInsight` stores per-game assistant signals such as untouched, sampled-dropped, wishlist risk, and release candidates
 - `AssistantRun` stores each assistant refresh summary and optional AI output metadata
+- `PlayerProfile` stores the AI-generated player profile (summary, preferences, patterns, internal recommendations) plus the agent's tool-call trace
 - `ExternalAccount` stores connected provider accounts like Steam
 - PlayStation refresh tokens are encrypted in `ExternalAccount.metadata`; NPSSO values are exchanged and then discarded
 - `ImportJob` and `ImportRow` keep an audit trail of CSV imports
@@ -111,6 +112,8 @@ Notes:
 - HowLongToBeat enrichment is optional and best-effort. If the website-backed search is unavailable, imports and Steam sync continue without completion-time estimates.
 - Metacritic enrichment is optional and best-effort. If Steam Store app metadata does not expose a Metacritic score, the canonical game keeps an empty metascore.
 - The Assistant tab works without AI. If `OPENAI_API_KEY` is set, the app can use OpenAI's Responses API to recommend three low-friction play-next picks and turn rule-based insights into short explanations. Only library summaries, selected game metadata, progress/playtime signals, source/provider labels, and rule outputs are sent.
+- The Overview tab includes an agentic player profile. When `OPENAI_API_KEY` is set, an agent loop gives the model read-only tools over the user's own catalog (`get_library_overview`, `list_games`, `get_player_feedback`, `get_genre_stats`); it investigates and then submits a structured profile (`submit_player_profile`) with preferred genres, play styles, behavior patterns, and recommendations drawn only from games already in the library. Tool payloads are minimized projections of `UserGameEntry` and `Game` metadata; no secrets, tokens, or provider account IDs are sent. Without the API key, profile generation fails with a clear message while the rest of the app keeps working.
+- The Assistant tab also includes a streaming library chat built on the Vercel AI SDK (`/api/assistant/chat`). It reuses the same read-only tool layer (`src/lib/assistant/library-tools.ts`) as the profile agent, so answers come from live lookups into the user's own catalog. It requires `OPENAI_API_KEY` and returns a clear 503 message without it. Each chat exchange is logged as an `AssistantRun` (status `COMPLETED_CHAT_AI`) with step, tool-call, and token usage, counts against the same per-user and app-wide daily AI quotas as assistant refreshes, and is rejected with a 429 once the quota is spent.
 - Assistant AI calls are app-gated before hitting OpenAI: unchanged catalog context reuses the latest OpenAI recommendations, otherwise each user is limited to one AI refresh every 10 minutes and 20 AI refreshes per rolling 24 hours, with a 100 AI-refresh rolling daily cap across the app. When a gate blocks AI, the deterministic rules fallback is used.
 
 ## Getting Started
