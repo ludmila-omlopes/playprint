@@ -79,6 +79,7 @@ model User {
   importJobs       ImportJob[]
   gameInsights     UserGameInsight[]
   assistantRuns    AssistantRun[]
+  playerProfile    PlayerProfile?
 }
 
 model ExternalAccount {
@@ -216,6 +217,20 @@ model AssistantRun {
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+model PlayerProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  summary   String
+  profile   Json
+  toolTrace Json?
+  model     String?
+  status    String
+  error     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ImportJob {

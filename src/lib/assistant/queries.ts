@@ -50,6 +50,11 @@ const AI_REFRESH_LIMITS = {
   globalDailyLimit: 100,
 } as const;
 
+// Statuses that represent a paid AI call and count against the daily quotas.
+// COMPLETED_AI is an assistant refresh; COMPLETED_CHAT_AI is a library chat
+// exchange. The 10-minute cooldown only applies to refreshes.
+const AI_RUN_STATUSES = ["COMPLETED_AI", "COMPLETED_CHAT_AI"];
+
 type AssistantAiSkipReason =
   | "CACHE_HIT"
   | "USER_COOLDOWN"
@@ -301,13 +306,13 @@ async function getAssistantAiRefreshDecision({
     prisma.assistantRun.count({
       where: {
         userId,
-        status: "COMPLETED_AI",
+        status: { in: AI_RUN_STATUSES },
         createdAt: { gte: oneDayAgo },
       },
     }),
     prisma.assistantRun.count({
       where: {
-        status: "COMPLETED_AI",
+        status: { in: AI_RUN_STATUSES },
         createdAt: { gte: oneDayAgo },
       },
     }),
@@ -369,13 +374,13 @@ async function getAssistantAiUsageForUser(userId: string, now = new Date()) {
     prisma.assistantRun.count({
       where: {
         userId,
-        status: "COMPLETED_AI",
+        status: { in: AI_RUN_STATUSES },
         createdAt: { gte: oneDayAgo },
       },
     }),
     prisma.assistantRun.count({
       where: {
-        status: "COMPLETED_AI",
+        status: { in: AI_RUN_STATUSES },
         createdAt: { gte: oneDayAgo },
       },
     }),
@@ -415,6 +420,79 @@ async function getAssistantAiUsageForUser(userId: string, now = new Date()) {
       effectiveRemainingToday > 0 &&
       cooldownRemainingMs === 0,
   };
+}
+
+export async function getAssistantChatGate(userId: string, now = new Date()) {
+  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const [userDailyAiRuns, globalDailyAiRuns] = await Promise.all([
+    prisma.assistantRun.count({
+      where: {
+        userId,
+        status: { in: AI_RUN_STATUSES },
+        createdAt: { gte: oneDayAgo },
+      },
+    }),
+    prisma.assistantRun.count({
+      where: {
+        status: { in: AI_RUN_STATUSES },
+        createdAt: { gte: oneDayAgo },
+      },
+    }),
+  ]);
+
+  if (userDailyAiRuns >= AI_REFRESH_LIMITS.userDailyLimit) {
+    return {
+      allowed: false as const,
+      message: `Daily AI limit reached (${AI_REFRESH_LIMITS.userDailyLimit} calls per day). The chat reopens tomorrow.`,
+    };
+  }
+
+  if (globalDailyAiRuns >= AI_REFRESH_LIMITS.globalDailyLimit) {
+    return {
+      allowed: false as const,
+      message: "The app-wide AI budget for today is used up. Try again tomorrow.",
+    };
+  }
+
+  return { allowed: true as const };
+}
+
+export async function recordAssistantChatRun({
+  userId,
+  model,
+  messageCount,
+  stepCount,
+  toolCallCount,
+  usage,
+}: {
+  userId: string;
+  model: string;
+  messageCount: number;
+  stepCount: number;
+  toolCallCount: number;
+  usage: {
+    inputTokens: number | null;
+    outputTokens: number | null;
+    totalTokens: number | null;
+  };
+}) {
+  await prisma.assistantRun.create({
+    data: {
+      userId,
+      inputSummary: {
+        kind: "library_chat",
+        messageCount,
+      } as Prisma.InputJsonValue,
+      outputSummary: {
+        kind: "library_chat",
+        stepCount,
+        toolCallCount,
+        usage,
+      } as Prisma.InputJsonValue,
+      model,
+      status: "COMPLETED_CHAT_AI",
+    },
+  });
 }
 
 function readInsightReasons(reasons: Prisma.JsonValue) {

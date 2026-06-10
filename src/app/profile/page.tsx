@@ -3,7 +3,9 @@ import { AssistantSignalType } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { BacklogDiagnosis } from "@/components/assistant/backlog-diagnosis";
 import { BuyDecisionForm } from "@/components/assistant/buy-decision-form";
+import { LibraryChat } from "@/components/assistant/library-chat";
 import { PlayNextPanel } from "@/components/assistant/play-next-panel";
+import { PlayerProfilePanel } from "@/components/assistant/player-profile-panel";
 import { CsvImportWidget } from "@/components/csv-import-widget";
 import { SyncActionForm } from "@/components/sync-action-form";
 import { getProfileData } from "@/lib/catalog";
@@ -12,6 +14,7 @@ import {
   getAssistantProfileData,
   getAssistantSignalEntryIds,
 } from "@/lib/assistant/queries";
+import { getPlayerProfileForUser } from "@/lib/assistant/profile-agent";
 import { hasIgdbConfig } from "@/lib/igdb";
 import {
   parseProfileGameSort,
@@ -31,6 +34,10 @@ import {
 } from "@/lib/utils";
 import { estimateRemainingTime } from "@/lib/time-estimates";
 import {
+  generatePlayerProfileAction,
+  refreshAssistantInsightsAction,
+} from "./assistant-actions";
+import {
   connectPlayStationAction,
   importCsvAction,
   syncPlayStationLibraryAction,
@@ -38,7 +45,6 @@ import {
   syncXboxLibraryAction,
   toggleFavoriteAction,
 } from "./actions";
-import { refreshAssistantInsightsAction } from "./assistant-actions";
 
 type ProfileSearchParams = Promise<{
   tab?: string;
@@ -53,6 +59,7 @@ type ProfileSearchParams = Promise<{
   xbox?: string;
   xboxSynced?: string;
   assistant?: string;
+  playerProfile?: string;
   error?: string;
 }>;
 
@@ -163,6 +170,8 @@ export default async function ProfilePage({
         : "overview";
   const assistant =
     activeTab === "assistant" ? await getAssistantProfileData(userId) : null;
+  const playerProfile =
+    activeTab === "overview" ? await getPlayerProfileForUser(userId) : null;
   const activeSignal = parseAssistantSignal(query.signal);
   const signalEntryIds =
     activeTab === "games" && activeSignal
@@ -222,7 +231,19 @@ export default async function ProfilePage({
                 tone: "success" as const,
                 message: `Assistant refreshed. ${query.assistant} insights updated.`,
               }
-            : null;
+            : query.playerProfile === "updated"
+              ? {
+                  tone: "success" as const,
+                  message:
+                    "Player profile generated from your games, feedback, and reviews.",
+                }
+              : query.playerProfile === "empty"
+                ? {
+                    tone: "error" as const,
+                    message:
+                      "Your library is empty. Sync a platform or import a CSV before generating a player profile.",
+                  }
+                : null;
 
   return (
     <main id="main-content" className="w-full max-w-[1200px] mx-auto grid gap-6">
@@ -346,6 +367,16 @@ export default async function ProfilePage({
       {/* ══════════════════════════════════════════════ */}
       {activeTab === "overview" ? (
         <>
+          {/* AI Player Profile */}
+          <PlayerProfilePanel
+            action={generatePlayerProfileAction}
+            aiConfigured={Boolean(process.env.OPENAI_API_KEY)}
+            hasGames={
+              profile.ownedEntries.length + profile.wishlistEntries.length > 0
+            }
+            profile={playerProfile}
+          />
+
           {/* Favorite Games */}
           <section className="panel">
             <div className="flex items-center justify-between gap-3.5 mb-[22px] max-lg:flex-col max-lg:items-start">
@@ -741,7 +772,8 @@ export default async function ProfilePage({
                 </span>
               </div>
               <p className="mt-2 text-xs text-ink/60">
-                Cached OpenAI picks and rule-only refreshes do not spend AI calls.
+                Cached OpenAI picks and rule-only refreshes do not spend AI
+                calls. Library chat messages do.
               </p>
             </div>
             <form action={refreshAssistantInsightsAction}>
@@ -750,6 +782,8 @@ export default async function ProfilePage({
               </button>
             </form>
           </section>
+
+          <LibraryChat aiConfigured={Boolean(process.env.OPENAI_API_KEY)} />
 
           <BacklogDiagnosis assistant={assistant} />
           <PlayNextPanel assistant={assistant} />

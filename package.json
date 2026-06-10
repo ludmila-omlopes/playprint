@@ -15,10 +15,13 @@
     "db:push": "node scripts/init-db.mjs"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.69",
+    "@ai-sdk/react": "^3.0.201",
     "@fontsource/bungee": "^5.2.7",
     "@fontsource/space-grotesk": "^5.2.10",
     "@prisma/client": "^6.19.0",
     "@tailwindcss/postcss": "^4.2.2",
+    "ai": "^6.0.199",
     "clsx": "^2.1.1",
     "jose": "^6.2.2",
     "next": "16.2.1",
@@ -27,6 +30,7 @@
     "psn-api": "^2.18.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-markdown": "^10.1.0",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.2",
     "zod": "^4.3.6"
