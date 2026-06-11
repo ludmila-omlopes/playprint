@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 const tones = {
   success: "bg-sage-soft",
   error: "bg-clay-soft",
-  info: "bg-blue-soft",
+  info: "bg-sky-soft",
 } as const;
 
 /** Soft, tinted message banner for sync results, errors, and hints. */

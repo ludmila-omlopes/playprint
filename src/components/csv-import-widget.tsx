@@ -161,7 +161,7 @@ export function CsvImportWidget({
   return (
     <div className="grid gap-[18px]">
       {/* File upload zone */}
-      <div className="rounded-card border border-dashed border-edge bg-bg/60 p-[18px]">
+      <div className="rounded-card border border-dashed border-edge bg-canvas/60 p-[18px]">
         <label className="mb-3 block font-semibold" htmlFor="csv-upload">
           Drop in a CSV export
         </label>
@@ -180,7 +180,7 @@ export function CsvImportWidget({
 
       {/* Error display */}
       {error ? (
-        <p className="font-semibold text-peach" aria-live="assertive">
+        <p className="font-semibold text-clay" aria-live="assertive">
           {error}
         </p>
       ) : null}
@@ -199,7 +199,7 @@ export function CsvImportWidget({
               onChange={(event) =>
                 setSource(event.target.value as ImportSource)
               }
-              className="min-h-11 rounded-inner border border-edge bg-paper px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime focus-visible:ring-offset-2"
+              className="min-h-11 rounded-inner border border-edge bg-surface px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2"
             >
               <option value="GENERIC">Generic CSV</option>
               <option value="PLAYSTATION">PlayStation CSV</option>
@@ -223,7 +223,7 @@ export function CsvImportWidget({
                       [field.key]: event.target.value,
                     }))
                   }
-                  className="min-h-11 rounded-inner border border-edge bg-paper px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime focus-visible:ring-offset-2"
+                  className="min-h-11 rounded-inner border border-edge bg-surface px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2"
                 >
                   <option value="">Not mapped</option>
                   {headers.map((header) => (
@@ -247,7 +247,7 @@ export function CsvImportWidget({
             {previewRows.length ? (
               previewRows.map((row, index) => (
                 <div
-                  className="grid grid-cols-[minmax(0,1.3fr)_repeat(4,minmax(0,1fr))] items-center gap-3.5 rounded-card border border-edge bg-paper p-4 shadow-hard-xs max-md:grid-cols-2"
+                  className="grid grid-cols-[minmax(0,1.3fr)_repeat(4,minmax(0,1fr))] items-center gap-3.5 rounded-card border border-edge bg-surface p-4 shadow-rest max-md:grid-cols-2"
                   key={`${row.title}-${index}`}
                 >
                   <strong>{row.title}</strong>

@@ -58,10 +58,10 @@ function ScoreBadge({ value }: { value: number }) {
       className={cn(
         "grid h-10 w-10 place-items-center rounded-[12px] font-display text-sm font-semibold",
         value >= 75
-          ? "bg-lime/80 text-ink"
+          ? "bg-sage/80 text-ink"
           : value >= 50
-            ? "bg-yellow/80 text-ink"
-            : "bg-peach/70 text-paper",
+            ? "bg-sand/80 text-ink"
+            : "bg-clay/70 text-surface",
       )}
     >
       {value}
@@ -123,7 +123,7 @@ export default async function GamePage({
             <div className="absolute inset-0 bg-gradient-to-t from-ink/95 via-ink/70 to-ink/35" />
           </div>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-lime/60 to-cyan/50" />
+          <div className="absolute inset-0 bg-gradient-to-br from-sage/60 to-sky/50" />
         )}
 
         {/* Hero content */}
@@ -146,21 +146,21 @@ export default async function GamePage({
           {/* Title + quick info */}
           <div className="max-md:text-center">
             {/* Breadcrumb */}
-            <nav className="mb-3 flex items-center gap-2 text-sm text-paper/55 max-md:justify-center" aria-label="Breadcrumb">
-              <Link href="/" className="transition-colors hover:text-paper/85">
+            <nav className="mb-3 flex items-center gap-2 text-sm text-surface/55 max-md:justify-center" aria-label="Breadcrumb">
+              <Link href="/" className="transition-colors hover:text-surface/85">
                 Home
               </Link>
               <span>/</span>
-              <Link href="/profile?tab=games" className="transition-colors hover:text-paper/85">
+              <Link href="/profile?tab=games" className="transition-colors hover:text-surface/85">
                 Games
               </Link>
               <span>/</span>
-              <span className="max-w-[20ch] truncate text-paper/85">
+              <span className="max-w-[20ch] truncate text-surface/85">
                 {game.name}
               </span>
             </nav>
 
-            <h1 className="text-[clamp(1.9rem,4.5vw,3rem)] leading-[1.08] text-paper">
+            <h1 className="text-[clamp(1.9rem,4.5vw,3rem)] leading-[1.08] text-surface">
               {game.name}
             </h1>
 
@@ -169,7 +169,7 @@ export default async function GamePage({
               {genres.slice(0, 3).map((genre) => (
                 <span
                   key={String(genre)}
-                  className="rounded-full border border-paper/15 bg-paper/15 px-3 py-1 text-[0.72rem] font-semibold text-paper/90 backdrop-blur-sm"
+                  className="rounded-full border border-surface/15 bg-surface/15 px-3 py-1 text-label font-semibold text-surface/90 backdrop-blur-sm"
                 >
                   {String(genre)}
                 </span>
@@ -177,7 +177,7 @@ export default async function GamePage({
               {platforms.slice(0, 3).map((platform) => (
                 <span
                   key={String(platform)}
-                  className="rounded-full border border-paper/10 bg-cyan/25 px-3 py-1 text-[0.72rem] font-semibold text-paper/90 backdrop-blur-sm"
+                  className="rounded-full border border-surface/10 bg-sky/25 px-3 py-1 text-label font-semibold text-surface/90 backdrop-blur-sm"
                 >
                   {String(platform)}
                 </span>
@@ -189,8 +189,8 @@ export default async function GamePage({
               {hasRating ? (
                 <div className="flex items-center gap-2">
                   <ScoreBadge value={ratingValue} />
-                  <div className="text-xs leading-tight text-paper/60">
-                    <span className="block font-semibold text-paper/85">
+                  <div className="text-xs leading-tight text-surface/60">
+                    <span className="block font-semibold text-surface/85">
                       IGDB
                     </span>
                     {game.totalRatingCount
@@ -202,29 +202,29 @@ export default async function GamePage({
               {hasMetacritic ? (
                 <div className="flex items-center gap-2">
                   <ScoreBadge value={game.metacriticScore!} />
-                  <div className="text-xs leading-tight text-paper/60">
-                    <span className="block font-semibold text-paper/85">
+                  <div className="text-xs leading-tight text-surface/60">
+                    <span className="block font-semibold text-surface/85">
                       Metacritic
                     </span>
                     metascore
                   </div>
                 </div>
               ) : null}
-              <div className="text-xs leading-tight text-paper/60">
-                <span className="block font-semibold text-paper/85">
+              <div className="text-xs leading-tight text-surface/60">
+                <span className="block font-semibold text-surface/85">
                   Released
                 </span>
                 {formatDate(game.releaseDate)}
               </div>
-              <div className="text-xs leading-tight text-paper/60">
-                <span className="block font-semibold text-paper/85">
+              <div className="text-xs leading-tight text-surface/60">
+                <span className="block font-semibold text-surface/85">
                   Owners
                 </span>
                 {formatNumber(owners.length)} in catalog
               </div>
               {game.hltbMainStoryMinutes ? (
-                <div className="text-xs leading-tight text-paper/60">
-                  <span className="block font-semibold text-paper/85">
+                <div className="text-xs leading-tight text-surface/60">
+                  <span className="block font-semibold text-surface/85">
                     Main story
                   </span>
                   {formatTimeEstimate(game.hltbMainStoryMinutes)}
@@ -284,7 +284,7 @@ export default async function GamePage({
 
                   return (
                     <div
-                      className="flex items-center gap-4 rounded-inner border border-edge bg-paper p-3.5 transition-colors hover:bg-bg"
+                      className="flex items-center gap-4 rounded-inner border border-edge bg-surface p-3.5 transition-colors hover:bg-canvas"
                       key={entry.id}
                     >
                       <div className="grid h-9 w-9 flex-none place-items-center rounded-full bg-sand-soft font-display text-xs">
@@ -328,7 +328,7 @@ export default async function GamePage({
                           <input type="hidden" name="entryId" value={entry.id} />
                           <input type="hidden" name="slug" value={game.slug} />
                           <button
-                            className="cursor-pointer rounded-pill border border-edge bg-paper px-3 py-1 text-xs font-bold transition-colors hover:bg-bg"
+                            className="cursor-pointer rounded-pill border border-edge bg-surface px-3 py-1 text-xs font-bold transition-colors hover:bg-canvas"
                             type="submit"
                             title="Finished means the credits rolled — independent of achievements."
                           >
@@ -348,7 +348,7 @@ export default async function GamePage({
                 })}
               </div>
             ) : (
-              <div className="rounded-inner border border-dashed border-edge bg-paper/60 p-6 text-center">
+              <div className="rounded-inner border border-dashed border-edge bg-surface/60 p-6 text-center">
                 <p className="text-sm font-semibold">No library activity yet.</p>
                 <p className="mt-1 text-xs text-ink-soft">
                   This page is a canonical metadata record ready for future ownership.
@@ -488,9 +488,9 @@ export default async function GamePage({
                     href={link.storeUrl ?? "#"}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-3 rounded-[12px] border border-edge bg-paper p-2.5 text-sm font-semibold transition-colors hover:bg-bg"
+                    className="flex items-center gap-3 rounded-[12px] border border-edge bg-surface p-2.5 text-sm font-semibold transition-colors hover:bg-canvas"
                   >
-                    <span className="grid h-7 w-7 flex-none place-items-center rounded-[8px] bg-blue-soft text-[0.65rem] font-display">
+                    <span className="grid h-7 w-7 flex-none place-items-center rounded-[8px] bg-sky-soft text-chip font-display">
                       {link.provider.slice(0, 2)}
                     </span>
                     {link.provider === ExternalProvider.STEAM
@@ -515,9 +515,9 @@ export default async function GamePage({
                     href={String(url)}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-3 rounded-[12px] border border-edge bg-paper p-2.5 text-sm transition-colors hover:bg-bg"
+                    className="flex items-center gap-3 rounded-[12px] border border-edge bg-surface p-2.5 text-sm transition-colors hover:bg-canvas"
                   >
-                    <span className="grid h-7 w-7 flex-none place-items-center rounded-[8px] bg-bg">
+                    <span className="grid h-7 w-7 flex-none place-items-center rounded-[8px] bg-canvas">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-3.5 w-3.5 text-ink-soft">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
                       </svg>

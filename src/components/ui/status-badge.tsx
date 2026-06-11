@@ -3,10 +3,10 @@ import { cn } from "@/lib/utils";
 const statusStyles: Record<string, string> = {
   OWNED: "bg-sage-soft text-ink",
   WISHLIST: "bg-sand-soft text-ink",
-  PLAYING: "bg-blue-soft text-ink",
-  COMPLETED: "bg-lavender-soft text-ink",
-  FINISHED: "bg-lavender-soft text-ink",
-  BACKLOG: "bg-bg text-ink-soft",
+  PLAYING: "bg-sky-soft text-ink",
+  COMPLETED: "bg-dusk-lavender-soft text-ink",
+  FINISHED: "bg-dusk-lavender-soft text-ink",
+  BACKLOG: "bg-canvas text-ink-soft",
 };
 
 const statusLabels: Record<string, string> = {
@@ -29,8 +29,8 @@ export function StatusBadge({
   return (
     <span
       className={cn(
-        "inline-block rounded-full px-2.5 py-0.5 text-[0.7rem] font-bold lowercase tracking-wide",
-        statusStyles[status] ?? "bg-bg text-ink-soft",
+        "inline-block rounded-full px-2.5 py-0.5 text-caption font-bold lowercase tracking-wide",
+        statusStyles[status] ?? "bg-canvas text-ink-soft",
         className,
       )}
     >

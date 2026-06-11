@@ -23,7 +23,7 @@ function RecommendationCard({
 
   return (
     <Link
-      className="block rounded-card border border-edge bg-paper p-4 shadow-hard-xs transition-all hover:-translate-y-0.5 hover:shadow-hard-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-soft"
+      className="block rounded-card border border-edge bg-surface p-4 shadow-rest transition-all hover:-translate-y-0.5 hover:shadow-lift focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-soft"
       href={`/games/${recommendation.slug}`}
     >
       <div className="flex items-start justify-between gap-3">

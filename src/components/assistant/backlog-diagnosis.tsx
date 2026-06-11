@@ -40,14 +40,14 @@ export function BacklogDiagnosis({
       <div className="grid grid-cols-6 gap-3 max-lg:grid-cols-3 max-sm:grid-cols-2">
         {items.map(([label, signal]) => (
           <Link
-            className="rounded-inner border border-edge bg-bg p-4 text-center transition-all hover:-translate-y-0.5 hover:bg-sage-soft hover:shadow-hard-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-soft"
+            className="rounded-inner border border-edge bg-canvas p-4 text-center transition-all hover:-translate-y-0.5 hover:bg-sage-soft hover:shadow-rest focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-soft"
             href={`/profile?tab=games&view=list&signal=${signal}`}
             key={signal}
           >
             <strong className="block font-display text-2xl font-medium">
               {formatNumber(counts.get(signal) ?? 0)}
             </strong>
-            <span className="mt-1.5 block text-[0.7rem] font-bold tracking-wide text-ink-soft">
+            <span className="mt-1.5 block text-caption font-bold tracking-wide text-ink-soft">
               {label}
             </span>
           </Link>

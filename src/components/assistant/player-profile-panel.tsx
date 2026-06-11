@@ -20,7 +20,7 @@ export function PlayerProfilePanel({
       <div className="mb-6 flex items-end justify-between gap-4 max-lg:flex-col max-lg:items-start">
         <div>
           <span className="section-label">Player profile</span>
-          <h2 className="text-[clamp(1.35rem,2.6vw,1.9rem)] leading-snug">
+          <h2 className="text-section-title leading-snug">
             Who you are as a player
           </h2>
           <p className="mt-1.5 max-w-[52ch] text-sm leading-relaxed text-ink-soft">
@@ -79,7 +79,7 @@ export function PlayerProfilePanel({
               <div className="grid gap-2 sm:grid-cols-2">
                 {profile.payload.preferredGenres.map((item) => (
                   <div
-                    className="rounded-inner border border-edge bg-paper px-3.5 py-2.5"
+                    className="rounded-inner border border-edge bg-surface px-3.5 py-2.5"
                     key={item.genre}
                   >
                     <strong className="block text-sm">{item.genre}</strong>
@@ -99,7 +99,7 @@ export function PlayerProfilePanel({
                 <ul className="grid gap-1.5 text-sm leading-relaxed">
                   {profile.payload.playStyles.map((style) => (
                     <li className="flex gap-2" key={style}>
-                      <span aria-hidden className="text-lime">
+                      <span aria-hidden className="text-sage">
                         •
                       </span>
                       {style}
@@ -115,7 +115,7 @@ export function PlayerProfilePanel({
                 <ul className="grid gap-1.5 text-sm leading-relaxed">
                   {profile.payload.behaviorPatterns.map((pattern) => (
                     <li className="flex gap-2" key={pattern}>
-                      <span aria-hidden className="text-lime">
+                      <span aria-hidden className="text-sage">
                         •
                       </span>
                       {pattern}
@@ -132,7 +132,7 @@ export function PlayerProfilePanel({
               <div className="grid gap-2">
                 {profile.payload.recommendations.map((recommendation) => (
                   <Link
-                    className="rounded-inner border border-edge bg-blue-soft px-3.5 py-2.5 transition-all hover:-translate-y-0.5 hover:shadow-hard-xs"
+                    className="rounded-inner border border-edge bg-sky-soft px-3.5 py-2.5 transition-all hover:-translate-y-0.5 hover:shadow-rest"
                     href={`/games/${recommendation.slug}`}
                     key={recommendation.slug}
                   >

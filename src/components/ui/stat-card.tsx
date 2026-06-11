@@ -13,14 +13,14 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "rounded-inner border border-edge bg-paper p-4 text-center",
+        "rounded-inner border border-edge bg-surface p-4 text-center",
         className,
       )}
     >
       <strong className="block font-display text-[clamp(1.5rem,3vw,2rem)] font-medium leading-none">
         {value}
       </strong>
-      <span className="mt-2 block text-[0.72rem] font-bold uppercase tracking-[0.12em] text-ink-soft">
+      <span className="mt-2 block text-label font-bold uppercase tracking-[0.12em] text-ink-soft">
         {label}
       </span>
     </div>
