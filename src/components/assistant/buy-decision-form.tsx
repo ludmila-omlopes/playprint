@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Button } from "@/components/ui/button";
 
 type BuyDecision = {
   verdict: "BUY_NOW" | "WAIT_FOR_SALE" | "WISHLIST_ONLY" | "SKIP_FOR_NOW";
@@ -86,9 +87,9 @@ export function BuyDecisionForm() {
           placeholder="A friend recommended it, it is on sale, or it fits the mood."
         />
       </label>
-      <button className="btn btn-primary justify-self-start" disabled={isPending}>
+      <Button className="justify-self-start" disabled={isPending} loading={isPending}>
         {isPending ? "Thinking it over..." : "Help me decide"}
-      </button>
+      </Button>
 
       {error ? (
         <div className="rounded-inner border border-edge bg-clay-soft p-4 text-sm font-semibold">

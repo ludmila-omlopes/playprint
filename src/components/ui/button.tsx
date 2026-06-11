@@ -1,64 +1,100 @@
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
-import { Slot } from "radix-ui"
+import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { Slot } from "radix-ui";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "relative inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-pill border border-transparent font-bold outline-none transition-[background-color,border-color,box-shadow,color,opacity] duration-200 ease-out focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:pointer-events-none disabled:opacity-60 data-[loading=true]:pointer-events-none aria-invalid:border-destructive aria-invalid:ring-destructive/20 motion-safe:transition-transform motion-safe:hover:-translate-y-px motion-safe:active:translate-y-0 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default:
+          "bg-ink text-surface shadow-[var(--shadow-btn-primary)] hover:shadow-[var(--shadow-btn-primary-hover)] night:bg-glow night:text-dusk-deep",
         destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20",
+          "bg-clay text-surface shadow-[var(--shadow-btn-primary)] hover:bg-clay/90 focus-visible:ring-destructive/20",
         outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground",
+          "border-edge bg-surface text-ink shadow-[var(--shadow-btn-ghost)] hover:bg-canvas hover:shadow-[var(--shadow-btn-ghost-hover)]",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "bg-sage-soft text-ink shadow-[var(--shadow-btn-ghost)] hover:bg-sand-soft hover:shadow-[var(--shadow-btn-ghost-hover)]",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+          "border-edge bg-surface text-ink shadow-[var(--shadow-btn-ghost)] hover:bg-canvas hover:shadow-[var(--shadow-btn-ghost-hover)]",
+        link: "rounded-inner text-ink-soft underline-offset-4 hover:text-ink hover:underline",
       },
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
-        xs: "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-        icon: "size-9",
-        "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-8",
-        "icon-lg": "size-10",
+        default: "min-h-11 px-5 py-2 text-sm has-[>svg]:px-4",
+        xs: "min-h-7 gap-1 px-2.5 py-1 text-xs has-[>svg]:px-2 [&_svg:not([class*='size-'])]:size-3",
+        sm: "min-h-9 gap-1.5 px-4 py-1.5 text-sm has-[>svg]:px-3",
+        lg: "min-h-12 px-7 py-2.5 text-base has-[>svg]:px-5",
+        icon: "size-11 p-0",
+        "icon-xs": "size-7 p-0 [&_svg:not([class*='size-'])]:size-3",
+        "icon-sm": "size-9 p-0",
+        "icon-lg": "size-12 p-0",
       },
     },
     defaultVariants: {
       variant: "default",
       size: "default",
     },
-  }
-)
+  },
+);
 
 function Button({
   className,
   variant = "default",
   size = "default",
   asChild = false,
+  loading = false,
+  disabled,
+  children,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
+    asChild?: boolean;
+    loading?: boolean;
   }) {
-  const Comp = asChild ? Slot.Root : "button"
+  const Comp = asChild ? Slot.Root : "button";
+  const isDisabled = disabled || loading;
+
+  if (asChild) {
+    return (
+      <Comp
+        data-slot="button"
+        data-variant={variant}
+        data-size={size}
+        className={cn(buttonVariants({ variant, size, className }))}
+        aria-disabled={isDisabled || undefined}
+        {...props}
+      >
+        {children}
+      </Comp>
+    );
+  }
 
   return (
-    <Comp
+    <button
       data-slot="button"
       data-variant={variant}
       data-size={size}
+      data-loading={loading ? "true" : undefined}
       className={cn(buttonVariants({ variant, size, className }))}
+      aria-busy={loading || undefined}
+      disabled={isDisabled}
       {...props}
-    />
-  )
+    >
+      <span
+        className={cn("inline-flex items-center gap-2", loading && "opacity-0")}
+      >
+        {children}
+      </span>
+      {loading ? (
+        <span
+          aria-hidden
+          className="absolute h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent"
+        />
+      ) : null}
+    </button>
+  );
 }
 
-export { Button, buttonVariants }
+export { Button, buttonVariants };

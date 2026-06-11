@@ -5,6 +5,7 @@ import { DefaultChatTransport } from "ai";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import Markdown from "react-markdown";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const STARTER_PROMPTS = [
@@ -163,13 +164,13 @@ export function LibraryChat({ aiConfigured }: { aiConfigured: boolean }) {
               placeholder="Ask about your games, taste, or what to play next"
               value={input}
             />
-            <button
-              className="btn btn-primary disabled:cursor-wait disabled:opacity-70"
+            <Button
               disabled={busy || !input.trim()}
+              loading={busy}
               type="submit"
             >
               {busy ? "Thinking..." : "Send"}
-            </button>
+            </Button>
           </form>
         </div>
       )}
