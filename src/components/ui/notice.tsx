@@ -11,23 +11,26 @@ const tones = {
 export function Notice({
   tone = "info",
   className,
+  icon,
   children,
 }: {
   tone?: keyof typeof tones;
   className?: string;
+  icon?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <div
       aria-live="polite"
       className={cn(
-        "rounded-inner border border-edge px-5 py-4 text-sm font-semibold leading-relaxed animate-slide-in",
+        "flex items-start gap-3 rounded-inner border border-edge px-5 py-4 text-sm font-semibold leading-relaxed shadow-rest animate-slide-in",
         tones[tone],
         className,
       )}
       role="status"
     >
-      {children}
+      {icon ? <span className="mt-0.5 flex-none text-ink-soft">{icon}</span> : null}
+      <div className="min-w-0">{children}</div>
     </div>
   );
 }

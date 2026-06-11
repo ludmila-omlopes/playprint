@@ -12,6 +12,7 @@ import { cookies } from "next/headers";
 import "./globals.css";
 import { SignOutForm } from "@/components/sign-out-form";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 import { getSessionUserId } from "@/lib/session";
 import { FILAZO_THEME_COOKIE, parseFilazoTheme } from "@/lib/theme";
@@ -56,12 +57,16 @@ export default async function RootLayout({
     <html lang="en" data-theme={theme}>
       <body>
         {/* Skip to content */}
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 btn btn-primary"
+        <Button
+          asChild
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50"
         >
-          Skip to content
-        </a>
+          <a
+            href="#main-content"
+          >
+            Skip to content
+          </a>
+        </Button>
 
         <div className="min-h-screen px-6 pb-6 max-md:px-4 max-md:pb-4">
           <header className="mx-auto flex w-full max-w-[1100px] items-center justify-between gap-4 py-5 max-sm:flex-col max-sm:gap-3">
@@ -91,9 +96,9 @@ export default async function RootLayout({
                   <SignOutForm />
                 </div>
               ) : (
-                <a className="btn btn-primary btn-sm" href="/api/auth/steam">
-                  Connect Steam
-                </a>
+                <Button asChild size="sm">
+                  <a href="/api/auth/steam">Connect Steam</a>
+                </Button>
               )}
             </nav>
           </header>

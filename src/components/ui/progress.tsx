@@ -1,31 +1,41 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Progress as ProgressPrimitive } from "radix-ui"
+import * as React from "react";
+import { Progress as ProgressPrimitive } from "radix-ui";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 function Progress({
   className,
   value,
+  label,
   ...props
-}: React.ComponentProps<typeof ProgressPrimitive.Root>) {
+}: React.ComponentProps<typeof ProgressPrimitive.Root> & {
+  label?: string;
+}) {
+  const normalizedValue = value ?? 0;
+
   return (
-    <ProgressPrimitive.Root
-      data-slot="progress"
-      className={cn(
-        "relative h-2 w-full overflow-hidden rounded-full bg-primary/20",
-        className
-      )}
-      {...props}
-    >
-      <ProgressPrimitive.Indicator
-        data-slot="progress-indicator"
-        className="h-full w-full flex-1 bg-primary transition-all"
-        style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
-      />
-    </ProgressPrimitive.Root>
-  )
+    <div className={cn("grid gap-1.5", className)}>
+      {label ? (
+        <div className="text-caption font-bold lowercase tracking-wide text-ink-soft">
+          {label}
+        </div>
+      ) : null}
+      <ProgressPrimitive.Root
+        data-slot="progress"
+        className="relative h-2 w-full overflow-hidden rounded-pill bg-edge"
+        value={value}
+        {...props}
+      >
+        <ProgressPrimitive.Indicator
+          data-slot="progress-indicator"
+          className="h-full w-full flex-1 rounded-pill bg-sage transition-transform duration-[250ms] ease-out"
+          style={{ transform: `translateX(-${100 - normalizedValue}%)` }}
+        />
+      </ProgressPrimitive.Root>
+    </div>
+  );
 }
 
-export { Progress }
+export { Progress };

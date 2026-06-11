@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
+import { Button } from "@/components/ui/button";
 
 type SyncActionFormProps = {
   action: (formData: FormData) => void;
@@ -19,14 +20,14 @@ function SyncSubmitButton({
   const { pending } = useFormStatus();
 
   return (
-    <button
-      className="btn btn-primary disabled:opacity-70 disabled:cursor-wait disabled:shadow-none disabled:translate-y-0 disabled:translate-x-0"
+    <Button
       type="submit"
       disabled={pending}
       aria-disabled={pending}
+      loading={pending}
     >
       {pending ? pendingLabel : buttonLabel}
-    </button>
+    </Button>
   );
 }
 

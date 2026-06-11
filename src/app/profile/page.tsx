@@ -9,6 +9,7 @@ import { PlayNextPanel } from "@/components/assistant/play-next-panel";
 import { PlayerProfilePanel } from "@/components/assistant/player-profile-panel";
 import { CsvImportWidget } from "@/components/csv-import-widget";
 import { SyncActionForm } from "@/components/sync-action-form";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Notice } from "@/components/ui/notice";
 import { SectionHeader } from "@/components/ui/section-header";
@@ -151,17 +152,17 @@ export default async function ProfilePage({
             imports are waiting too — start wherever feels easiest.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3.5">
-            <a className="btn btn-primary" href="/api/auth/steam">
-              Connect Steam
-            </a>
+            <Button asChild>
+              <a href="/api/auth/steam">Connect Steam</a>
+            </Button>
             {isXboxConfigured() ? (
-              <a className="btn btn-ghost" href="/api/auth/xbox">
-                Connect Xbox
-              </a>
+              <Button asChild variant="ghost">
+                <a href="/api/auth/xbox">Connect Xbox</a>
+              </Button>
             ) : null}
-            <Link className="btn btn-ghost" href="/">
-              Back home
-            </Link>
+            <Button asChild variant="ghost">
+              <Link href="/">Back home</Link>
+            </Button>
           </div>
         </section>
       </main>
@@ -187,9 +188,9 @@ export default async function ProfilePage({
             intended for local development.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3.5">
-            <Link className="btn btn-primary" href="/">
-              Back home
-            </Link>
+            <Button asChild>
+              <Link href="/">Back home</Link>
+            </Button>
           </div>
         </section>
       </main>
@@ -524,9 +525,9 @@ export default async function ProfilePage({
                       pendingNotice="Steam sync is running. Keep this page open until the library refresh finishes."
                     />
                   ) : (
-                    <a className="btn btn-primary" href="/api/auth/steam">
-                      Connect Steam
-                    </a>
+                    <Button asChild>
+                      <a href="/api/auth/steam">Connect Steam</a>
+                    </Button>
                   )
                 }
               />
@@ -574,9 +575,9 @@ export default async function ProfilePage({
                       pendingNotice="Xbox sync is running. Keep this page open while achievement-history titles are attached to your catalog."
                     />
                   ) : isXboxConfigured() ? (
-                    <a className="btn btn-primary" href="/api/auth/xbox">
-                      Connect Xbox
-                    </a>
+                    <Button asChild>
+                      <a href="/api/auth/xbox">Connect Xbox</a>
+                    </Button>
                   ) : null
                 }
               />
@@ -719,9 +720,9 @@ export default async function ProfilePage({
                         required
                       />
                     </label>
-                    <button className="btn btn-primary" type="submit">
+                    <Button type="submit">
                       Connect PlayStation
-                    </button>
+                    </Button>
                   </form>
                 )}
               </div>
@@ -778,9 +779,9 @@ export default async function ProfilePage({
               </div>
             </div>
             <form action={refreshAssistantInsightsAction}>
-              <button className="btn btn-primary" type="submit">
+              <Button type="submit">
                 Refresh assistant
-              </button>
+              </Button>
             </form>
           </section>
 
@@ -904,9 +905,9 @@ export default async function ProfilePage({
                 pendingNotice="Steam sync is running. Keep this page open until the library refresh finishes."
               />
             ) : (
-              <a className="btn btn-primary" href="/api/auth/steam">
-                Connect Steam
-              </a>
+              <Button asChild>
+                <a href="/api/auth/steam">Connect Steam</a>
+              </Button>
             )}
           </section>
 

@@ -5,6 +5,7 @@ import { getGameBySlug } from "@/lib/catalog";
 import { getSessionUserId } from "@/lib/session";
 import { markFinishedAction } from "@/app/profile/actions";
 import { ScreenshotLightbox } from "@/components/screenshot-lightbox";
+import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/ui/stat-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import {
@@ -535,15 +536,14 @@ export default async function GamePage({
           ) : null}
 
           {/* Back link */}
-          <Link
-            href="/profile?tab=games"
-            className="btn btn-ghost justify-center text-sm"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-4 w-4">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-            </svg>
-            Back to library
-          </Link>
+          <Button asChild variant="ghost" className="justify-center text-sm">
+            <Link href="/profile?tab=games">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-4 w-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+              </svg>
+              Back to library
+            </Link>
+          </Button>
         </aside>
       </div>
     </main>

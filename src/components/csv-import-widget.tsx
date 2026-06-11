@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Papa from "papaparse";
+import { Button } from "@/components/ui/button";
 
 type ColumnMapping = {
   title: string;
@@ -264,13 +265,12 @@ export function CsvImportWidget({
             )}
           </div>
 
-          <button
-            className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0 disabled:translate-x-0"
+          <Button
             type="submit"
             disabled={!mapping.title || !csvText}
           >
             Import catalog data
-          </button>
+          </Button>
         </form>
       ) : null}
     </div>

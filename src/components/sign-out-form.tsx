@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { clearUserSession } from "@/lib/session";
 
 export function SignOutForm() {
@@ -10,9 +11,9 @@ export function SignOutForm() {
 
   return (
     <form action={signOut}>
-      <button className="btn btn-ghost btn-sm" type="submit">
+      <Button variant="ghost" size="sm" type="submit">
         Sign out
-      </button>
+      </Button>
     </form>
   );
 }
