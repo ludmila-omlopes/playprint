@@ -18,7 +18,7 @@ const verdictLabels: Record<BuyDecision["verdict"], string> = {
 };
 
 const inputClassName =
-  "rounded-inner border border-edge bg-paper px-3 py-2 font-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime focus-visible:ring-offset-2";
+  "rounded-inner border border-edge bg-surface px-3 py-2 font-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2";
 
 export function BuyDecisionForm() {
   const [decision, setDecision] = useState<BuyDecision | null>(null);
@@ -97,7 +97,7 @@ export function BuyDecisionForm() {
       ) : null}
 
       {decision ? (
-        <div className="rounded-card border border-edge bg-sand-soft p-5 shadow-hard-xs">
+        <div className="rounded-card border border-edge bg-sand-soft p-5 shadow-rest">
           <div className="flex items-center justify-between gap-3">
             <strong className="font-display text-xl">
               {verdictLabels[decision.verdict]}

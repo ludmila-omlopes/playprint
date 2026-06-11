@@ -1,26 +1,83 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* ── shadcn/ui variables, mapped onto the calm filazo palette ── */
+/* Filazo design tokens: calm, nostalgic, warm, and low-pressure. */
+@theme {
+  --color-canvas: #faf7f1;
+  --color-surface: #fffdf9;
+  --color-ink: #3f443c;
+  --color-ink-soft: #6f7468;
+  --color-edge: #e9e2d4;
+
+  /* Accent hues */
+  --color-sage: #9ab88e; /* growth, owned, positive */
+  --color-sky: #92aec6; /* currently playing, info */
+  --color-clay: #c98d76; /* warmth, favorites */
+  --color-sand: #e4d3ac; /* wishlist, highlights */
+  --color-dusk-lavender: #b3a8cd; /* assistant, reflective */
+  --color-glow: #e3c08d; /* lamp light, Night Mode accent */
+
+  /* Dusk palette for atmospheric surfaces */
+  --color-dusk: #2e3831;
+  --color-dusk-deep: #222b25;
+  --color-dusk-mist: #46544b;
+  --color-cream: #f6f1e6;
+
+  /* Soft tints for fills */
+  --color-sage-soft: #eef3ea;
+  --color-sky-soft: #eaf0f5;
+  --color-sand-soft: #f7f0e0;
+  --color-clay-soft: #f7eae3;
+  --color-dusk-lavender-soft: #f0edf6;
+
+  --font-display: "Fraunces", "Georgia", serif;
+  --font-body: "Nunito Sans", "Segoe UI", sans-serif;
+
+  --text-display: clamp(2.6rem, 6vw, 4.4rem);
+  --text-page-title: clamp(1.8rem, 4vw, 2.6rem);
+  --text-section-title: clamp(1.35rem, 2.6vw, 1.9rem);
+  --text-quote: clamp(1.7rem, 3.6vw, 2.6rem);
+  --text-kicker: 0.78rem;
+  --text-label: 0.72rem;
+  --text-caption: 0.7rem;
+  --text-chip: 0.65rem;
+  --text-micro: 0.62rem;
+
+  --radius-card: 24px;
+  --radius-pill: 999px;
+  --radius-inner: 18px;
+
+  --shadow-rest: 0 3px 10px rgba(63, 68, 60, 0.07);
+  --shadow-lift: 0 10px 28px rgba(63, 68, 60, 0.07);
+  --shadow-float: 0 20px 44px rgba(63, 68, 60, 0.09);
+  --shadow-soft: 0 14px 36px rgba(63, 68, 60, 0.06);
+  --shadow-header: 0 8px 24px rgba(63, 68, 60, 0.05);
+  --shadow-btn-primary: 0 6px 18px rgba(63, 68, 60, 0.18);
+  --shadow-btn-primary-hover: 0 10px 24px rgba(63, 68, 60, 0.22);
+  --shadow-btn-ghost: 0 3px 10px rgba(63, 68, 60, 0.06);
+  --shadow-btn-ghost-hover: 0 6px 16px rgba(63, 68, 60, 0.1);
+}
+
+/* shadcn/ui variables, mapped onto the semantic Filazo palette. */
 :root {
-  --background: #faf7f1;
-  --foreground: #3f443c;
-  --card: #fffdf9;
-  --card-foreground: #3f443c;
-  --popover: #fffdf9;
-  --popover-foreground: #3f443c;
-  --primary: #3f443c;
-  --primary-foreground: #fffdf9;
-  --secondary: #eef3ea;
-  --secondary-foreground: #3f443c;
-  --muted: #f1ece1;
-  --muted-foreground: #6f7468;
-  --accent: #eaf0f5;
-  --accent-foreground: #3f443c;
+  --background: var(--color-canvas);
+  --foreground: var(--color-ink);
+  --card: var(--color-surface);
+  --card-foreground: var(--color-ink);
+  --popover: var(--color-surface);
+  --popover-foreground: var(--color-ink);
+  --primary: var(--color-ink);
+  --primary-foreground: var(--color-surface);
+  --secondary: var(--color-sage-soft);
+  --secondary-foreground: var(--color-ink);
+  --muted: var(--color-sand-soft);
+  --muted-foreground: var(--color-ink-soft);
+  --accent: var(--color-sky-soft);
+  --accent-foreground: var(--color-ink);
   --destructive: #b56a52;
-  --border: #e9e2d4;
-  --input: #e9e2d4;
-  --ring: #9ab88e;
+  --border: var(--color-edge);
+  --input: var(--color-edge);
+  --ring: var(--color-sage);
   --radius: 1rem;
 }
 
@@ -49,60 +106,7 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* ── Theme tokens ─────────────────────────────────────────────
-   Calm, soft-minimal palette designed to lower backlog anxiety:
-   warm cream canvas, sage / dusty-blue / clay accents, hairline
-   borders, and diffuse shadows. Legacy token names (peach, lime,
-   cyan, yellow, shadow-hard*) are kept but remapped so every
-   surface inherits the calmer hues. */
-@theme {
-  --color-bg: #faf7f1;
-  --color-ink: #3f443c;
-  --color-ink-soft: #6f7468;
-  --color-paper: #fffdf9;
-  --color-edge: #e9e2d4;
-
-  /* Accent hues (legacy names, calm values) */
-  --color-peach: #c98d76; /* soft clay — warmth, hearts, hover */
-  --color-lime: #9ab88e; /* sage — positive, owned, growth */
-  --color-cyan: #92aec6; /* dusty blue — info, playing */
-  --color-yellow: #e4d3ac; /* warm sand — highlights, wishlist */
-  --color-lavender: #b3a8cd; /* dusk — assistant, reflective */
-
-  /* Dusk palette — atmospheric surfaces (landing hero, night sections) */
-  --color-dusk: #2e3831;
-  --color-dusk-deep: #222b25;
-  --color-dusk-mist: #46544b;
-  --color-glow: #e3c08d; /* lamp light */
-  --color-cream: #f6f1e6;
-
-  /* Soft tints for fills */
-  --color-sage-soft: #eef3ea;
-  --color-blue-soft: #eaf0f5;
-  --color-sand-soft: #f7f0e0;
-  --color-clay-soft: #f7eae3;
-  --color-lavender-soft: #f0edf6;
-
-  --font-display: "Fraunces", "Georgia", serif;
-  --font-body: "Nunito Sans", "Segoe UI", sans-serif;
-
-  --radius-card: 24px;
-  --radius-pill: 999px;
-  --radius-inner: 18px;
-
-  /* Legacy shadow names remapped to soft, diffuse light */
-  --shadow-hard: 0 20px 44px rgba(63, 68, 60, 0.09);
-  --shadow-hard-sm: 0 10px 28px rgba(63, 68, 60, 0.07);
-  --shadow-hard-xs: 0 3px 10px rgba(63, 68, 60, 0.07);
-  --shadow-soft: 0 14px 36px rgba(63, 68, 60, 0.06);
-  --shadow-header: 0 8px 24px rgba(63, 68, 60, 0.05);
-  --shadow-btn-primary: 0 6px 18px rgba(63, 68, 60, 0.18);
-  --shadow-btn-primary-hover: 0 10px 24px rgba(63, 68, 60, 0.22);
-  --shadow-btn-ghost: 0 3px 10px rgba(63, 68, 60, 0.06);
-  --shadow-btn-ghost-hover: 0 6px 16px rgba(63, 68, 60, 0.1);
-}
-
-/* ── Base layer ── */
+/* Base layer */
 @layer base {
   html,
   body {
@@ -116,7 +120,7 @@
     background:
       radial-gradient(circle at 12% -4%, rgba(154, 184, 142, 0.12), transparent 36%),
       radial-gradient(circle at 92% 0%, rgba(146, 174, 198, 0.12), transparent 34%),
-      linear-gradient(180deg, #fbf8f3 0%, var(--color-bg) 60%, #f4efe5 100%);
+      linear-gradient(180deg, #fbf8f3 0%, var(--color-canvas) 60%, #f4efe5 100%);
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -261,13 +265,13 @@
   }
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-ink-soft);
+    box-shadow: 0 0 0 2px var(--color-canvas), 0 0 0 4px var(--color-ink-soft);
   }
 }
 
 @utility btn-primary {
   background: var(--color-ink);
-  color: var(--color-paper);
+  color: var(--color-surface);
   box-shadow: var(--shadow-btn-primary);
   &:hover {
     background: #4d5349;
@@ -276,7 +280,7 @@
 }
 
 @utility btn-ghost {
-  background: var(--color-paper);
+  background: var(--color-surface);
   border-color: var(--color-edge);
   box-shadow: var(--shadow-btn-ghost);
   &:hover {
@@ -295,8 +299,8 @@
   border: 1px solid var(--color-edge);
   border-radius: var(--radius-card);
   padding: 20px;
-  background: var(--color-paper);
-  box-shadow: var(--shadow-hard-xs);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-rest);
 }
 
 @utility card-hover {
@@ -305,13 +309,13 @@
     box-shadow 250ms ease;
   &:hover {
     transform: translateY(-3px);
-    box-shadow: var(--shadow-hard-sm);
+    box-shadow: var(--shadow-lift);
   }
 }
 
 @utility panel {
   padding: 28px;
-  background: var(--color-paper);
+  background: var(--color-surface);
   border: 1px solid var(--color-edge);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-soft);
@@ -372,7 +376,7 @@
     height: 2px;
     width: 0;
     border-radius: 2px;
-    background: var(--color-lime);
+    background: var(--color-sage);
     transition: width 250ms ease;
   }
   &:hover {
@@ -383,7 +387,7 @@
   }
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-ink-soft);
+    box-shadow: 0 0 0 2px var(--color-canvas), 0 0 0 4px var(--color-ink-soft);
     border-radius: 4px;
   }
 }

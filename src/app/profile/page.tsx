@@ -84,7 +84,7 @@ function SteamCompletionInfoIcon() {
   return (
     <span
       aria-label={STEAM_COMPLETION_TOOLTIP}
-      className="inline-grid h-4 w-4 flex-none place-items-center rounded-full border border-current text-[0.62rem] font-black leading-none opacity-60"
+      className="inline-grid h-4 w-4 flex-none place-items-center rounded-full border border-current text-micro font-black leading-none opacity-60"
       role="img"
       tabIndex={0}
       title={STEAM_COMPLETION_TOOLTIP}
@@ -139,7 +139,7 @@ export default async function ProfilePage({
       <main id="main-content" className="mx-auto w-full max-w-[760px]">
         <section className="panel p-10 text-center">
           <p className="section-label justify-center">Your library</p>
-          <h1 className="mb-3 text-[clamp(1.8rem,4vw,2.6rem)] leading-snug">
+          <h1 className="mb-3 text-page-title leading-snug">
             Connect an account to begin.
           </h1>
           <p className="mx-auto max-w-[42ch] leading-relaxed text-ink-soft">
@@ -355,7 +355,7 @@ export default async function ProfilePage({
         </div>
 
         <nav
-          className="grid gap-1 rounded-[28px] border border-edge bg-paper p-2 shadow-hard-xs"
+          className="grid gap-1 rounded-[28px] border border-edge bg-surface p-2 shadow-rest"
           aria-label="Profile sections"
         >
           {railSections.map(({ tab, href, label, hint, icon: Icon, count }) => (
@@ -366,8 +366,8 @@ export default async function ProfilePage({
               className={cn(
                 "flex items-center gap-3 rounded-[20px] px-4 py-3 transition-colors duration-200",
                 activeTab === tab
-                  ? "bg-ink text-paper"
-                  : "text-ink-soft hover:bg-bg hover:text-ink",
+                  ? "bg-ink text-surface"
+                  : "text-ink-soft hover:bg-canvas hover:text-ink",
               )}
             >
               <Icon className="h-4.5 w-4.5 flex-none opacity-80" />
@@ -377,8 +377,8 @@ export default async function ProfilePage({
                 </span>
                 <span
                   className={cn(
-                    "block text-[0.7rem] leading-tight",
-                    activeTab === tab ? "text-paper/60" : "text-ink-soft/70",
+                    "block text-caption leading-tight",
+                    activeTab === tab ? "text-surface/60" : "text-ink-soft/70",
                   )}
                 >
                   {hint}
@@ -389,8 +389,8 @@ export default async function ProfilePage({
                   className={cn(
                     "rounded-full px-2 py-0.5 text-[0.68rem] font-bold",
                     activeTab === tab
-                      ? "bg-paper/20 text-paper"
-                      : "bg-bg text-ink-soft",
+                      ? "bg-surface/20 text-surface"
+                      : "bg-canvas text-ink-soft",
                   )}
                 >
                   {count}
@@ -443,7 +443,7 @@ export default async function ProfilePage({
 
                   return (
                     <div
-                      className="card-hover group relative overflow-hidden rounded-card border border-edge bg-paper shadow-hard-xs"
+                      className="card-hover group relative overflow-hidden rounded-card border border-edge bg-surface shadow-rest"
                       key={`fav-${entry.id}`}
                     >
                       <Link href={`/games/${entry.game.slug}`}>
@@ -487,7 +487,7 @@ export default async function ProfilePage({
                         <input type="hidden" name="entryId" value={entry.id} />
                         <button
                           type="submit"
-                          className="grid h-9 w-9 cursor-pointer place-items-center rounded-full bg-paper/90 text-peach shadow-hard-xs transition-colors hover:bg-clay-soft"
+                          className="grid h-9 w-9 cursor-pointer place-items-center rounded-full bg-surface/90 text-clay shadow-rest transition-colors hover:bg-clay-soft"
                           aria-label={`Remove ${entry.game.name} from favorites`}
                           title="Remove from favorites"
                         >
@@ -692,7 +692,7 @@ export default async function ProfilePage({
                         </li>
                         <li>
                           <strong>3.</strong> Copy only the value inside{" "}
-                          <code className="rounded-[6px] bg-bg px-1.5 py-0.5 font-mono text-[0.8em]">
+                          <code className="rounded-[6px] bg-canvas px-1.5 py-0.5 font-mono text-[0.8em]">
                             npsso
                           </code>
                           , paste it below, then connect.
@@ -707,7 +707,7 @@ export default async function ProfilePage({
                     <label className="grid gap-2">
                       <span className="text-sm font-semibold">NPSSO token</span>
                       <input
-                        className="min-h-11 rounded-inner border border-edge bg-paper px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime focus-visible:ring-offset-2"
+                        className="min-h-11 rounded-inner border border-edge bg-surface px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2"
                         name="npsso"
                         type="password"
                         autoComplete="off"
@@ -744,7 +744,7 @@ export default async function ProfilePage({
       {/* ── ASSISTANT TAB ── */}
       {activeTab === "assistant" && assistant ? (
         <>
-          <section className="flex items-center justify-between gap-4 rounded-card border border-edge bg-lavender-soft px-6 py-5 shadow-hard-xs max-md:flex-col max-md:items-start">
+          <section className="flex items-center justify-between gap-4 rounded-card border border-edge bg-dusk-lavender-soft px-6 py-5 shadow-rest max-md:flex-col max-md:items-start">
             <div>
               <p className="section-label !mb-1">Backlog companion</p>
               <p className="text-sm font-semibold leading-snug">
@@ -755,15 +755,15 @@ export default async function ProfilePage({
                 without an API key.
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold text-ink-soft">
-                <span className="rounded-full bg-paper px-3 py-1">
+                <span className="rounded-full bg-surface px-3 py-1">
                   AI calls left today:{" "}
                   {formatNumber(assistant.aiUsage.effectiveRemainingToday)}
                 </span>
-                <span className="rounded-full bg-paper px-3 py-1">
+                <span className="rounded-full bg-surface px-3 py-1">
                   Your use: {formatNumber(assistant.aiUsage.userUsedToday)} /{" "}
                   {formatNumber(assistant.aiUsage.userDailyLimit)}
                 </span>
-                <span className="rounded-full bg-paper px-3 py-1">
+                <span className="rounded-full bg-surface px-3 py-1">
                   Next AI refresh:{" "}
                   {assistant.aiUsage.openAiConfigured
                     ? formatAssistantCooldown(
@@ -815,7 +815,7 @@ export default async function ProfilePage({
               ) : null}
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <div className="flex gap-1 rounded-pill border border-edge bg-paper p-1">
+              <div className="flex gap-1 rounded-pill border border-edge bg-surface p-1">
                 {[
                   ["added", "Newest"],
                   ["playtime", "Playtime"],
@@ -828,8 +828,8 @@ export default async function ProfilePage({
                     className={cn(
                       "rounded-pill px-3 py-1.5 text-xs font-bold transition-colors",
                       gamesSort === sort
-                        ? "bg-ink text-paper"
-                        : "text-ink-soft hover:bg-bg hover:text-ink",
+                        ? "bg-ink text-surface"
+                        : "text-ink-soft hover:bg-canvas hover:text-ink",
                     )}
                     key={sort}
                   >
@@ -837,7 +837,7 @@ export default async function ProfilePage({
                   </Link>
                 ))}
               </div>
-              <div className="flex gap-1 rounded-pill border border-edge bg-paper p-1">
+              <div className="flex gap-1 rounded-pill border border-edge bg-surface p-1">
                 <Link
                   href={`/profile?tab=games&view=list&sort=${gamesSort}${
                     activeSignal ? `&signal=${activeSignal}` : ""
@@ -845,8 +845,8 @@ export default async function ProfilePage({
                   className={cn(
                     "grid place-items-center rounded-pill px-3 py-1.5 transition-colors",
                     gamesView === "list"
-                      ? "bg-ink text-paper"
-                      : "text-ink-soft hover:bg-bg hover:text-ink",
+                      ? "bg-ink text-surface"
+                      : "text-ink-soft hover:bg-canvas hover:text-ink",
                   )}
                   aria-label="List view"
                   title="List view"
@@ -862,8 +862,8 @@ export default async function ProfilePage({
                   className={cn(
                     "grid place-items-center rounded-pill px-3 py-1.5 transition-colors",
                     gamesView === "grid"
-                      ? "bg-ink text-paper"
-                      : "text-ink-soft hover:bg-bg hover:text-ink",
+                      ? "bg-ink text-surface"
+                      : "text-ink-soft hover:bg-canvas hover:text-ink",
                   )}
                   aria-label="Grid view"
                   title="Grid view"
@@ -876,7 +876,7 @@ export default async function ProfilePage({
             </div>
           </div>
 
-          <section className="flex items-center justify-between gap-4 rounded-card border border-edge bg-sand-soft px-6 py-5 shadow-hard-xs max-md:flex-col max-md:items-start">
+          <section className="flex items-center justify-between gap-4 rounded-card border border-edge bg-sand-soft px-6 py-5 shadow-rest max-md:flex-col max-md:items-start">
             <div>
               <p className="section-label !mb-1">Sync reminder</p>
               <p className="text-sm font-semibold leading-snug">
@@ -904,7 +904,7 @@ export default async function ProfilePage({
             )}
           </section>
 
-          <section className="flex items-center justify-between gap-4 rounded-card border border-edge bg-lavender-soft px-6 py-5 shadow-hard-xs max-md:flex-col max-md:items-start">
+          <section className="flex items-center justify-between gap-4 rounded-card border border-edge bg-dusk-lavender-soft px-6 py-5 shadow-rest max-md:flex-col max-md:items-start">
             <div>
               <p className="section-label !mb-1">Finished games</p>
               <p className="text-sm font-semibold leading-snug">
@@ -935,7 +935,7 @@ export default async function ProfilePage({
           {gamesView === "list" ? (
             <section className="panel !p-0 overflow-hidden">
               {/* Table header */}
-              <div className="grid grid-cols-[1fr_minmax(0,0.32fr)_minmax(0,0.32fr)_minmax(0,0.36fr)_minmax(0,0.36fr)_minmax(0,0.38fr)_minmax(0,0.38fr)_44px] gap-3 border-b border-edge bg-bg px-5 py-3 text-[0.7rem] font-bold uppercase tracking-[0.12em] text-ink-soft max-md:grid-cols-[1fr_minmax(0,0.5fr)_44px] max-md:gap-2">
+              <div className="grid grid-cols-[1fr_minmax(0,0.32fr)_minmax(0,0.32fr)_minmax(0,0.36fr)_minmax(0,0.36fr)_minmax(0,0.38fr)_minmax(0,0.38fr)_44px] gap-3 border-b border-edge bg-canvas px-5 py-3 text-caption font-bold uppercase tracking-[0.12em] text-ink-soft max-md:grid-cols-[1fr_minmax(0,0.5fr)_44px] max-md:gap-2">
                 <span>Title</span>
                 <span>Platform</span>
                 <span className="max-md:hidden">Status</span>
@@ -954,7 +954,7 @@ export default async function ProfilePage({
 
                       return (
                       <div
-                        className="grid scroll-mt-6 grid-cols-[1fr_minmax(0,0.32fr)_minmax(0,0.32fr)_minmax(0,0.36fr)_minmax(0,0.36fr)_minmax(0,0.38fr)_minmax(0,0.38fr)_44px] items-center gap-3 px-5 py-2.5 transition-colors hover:bg-bg target:bg-blue-soft max-md:grid-cols-[1fr_minmax(0,0.5fr)_44px] max-md:gap-2"
+                        className="grid scroll-mt-6 grid-cols-[1fr_minmax(0,0.32fr)_minmax(0,0.32fr)_minmax(0,0.36fr)_minmax(0,0.36fr)_minmax(0,0.38fr)_minmax(0,0.38fr)_44px] items-center gap-3 px-5 py-2.5 transition-colors hover:bg-canvas target:bg-sky-soft max-md:grid-cols-[1fr_minmax(0,0.5fr)_44px] max-md:gap-2"
                         id={`entry-${entry.id}`}
                         key={`list-${entry.id}`}
                       >
@@ -975,7 +975,7 @@ export default async function ProfilePage({
                               </div>
                             )}
                           </div>
-                          <span className="truncate text-sm font-semibold transition-colors hover:text-peach">
+                          <span className="truncate text-sm font-semibold transition-colors hover:text-clay">
                             {entry.game.name}
                           </span>
                         </Link>
@@ -1050,7 +1050,7 @@ export default async function ProfilePage({
                               filled={Boolean(entry.isFavorite)}
                               className={cn(
                                 "h-4 w-4",
-                                entry.isFavorite ? "text-peach" : "text-edge",
+                                entry.isFavorite ? "text-clay" : "text-edge",
                               )}
                             />
                           </button>
@@ -1083,7 +1083,7 @@ export default async function ProfilePage({
 
                       return (
                       <div
-                        className="card-hover group relative scroll-mt-6 overflow-hidden rounded-card border border-edge bg-paper shadow-hard-xs target:ring-2 target:ring-cyan"
+                        className="card-hover group relative scroll-mt-6 overflow-hidden rounded-card border border-edge bg-surface shadow-rest target:ring-2 target:ring-sky"
                         id={`entry-${entry.id}`}
                         key={`grid-${entry.id}`}
                       >
@@ -1105,17 +1105,17 @@ export default async function ProfilePage({
 
                           {/* Info overlay at bottom of cover */}
                           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/75 via-ink/45 to-transparent px-3 pb-3 pt-10">
-                            <h3 className="line-clamp-2 text-sm font-bold leading-snug text-paper">
+                            <h3 className="line-clamp-2 text-sm font-bold leading-snug text-surface">
                               {entry.game.name}
                             </h3>
                             <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                              <span className="inline-block rounded-full bg-paper/85 px-2 py-px text-[0.62rem] font-bold lowercase tracking-wide text-ink">
+                              <span className="inline-block rounded-full bg-surface/85 px-2 py-px text-micro font-bold lowercase tracking-wide text-ink">
                                 {entry.finishedAt && entry.status !== "COMPLETED"
                                   ? "finished"
                                   : entry.status.toLowerCase()}
                               </span>
                               {entry.playtimeMinutes && entry.playtimeMinutes > 0 ? (
-                                <span className="text-[0.65rem] text-paper/75">
+                                <span className="text-chip text-surface/75">
                                   {formatPlaytime(
                                     entry.playtimeMinutes,
                                     entry.completionPercent,
@@ -1124,7 +1124,7 @@ export default async function ProfilePage({
                               ) : null}
                               {remainingTime ? (
                                 <span
-                                  className="rounded-full bg-paper/20 px-2 py-px text-[0.65rem] font-semibold text-paper/90"
+                                  className="rounded-full bg-surface/20 px-2 py-px text-chip font-semibold text-surface/90"
                                   title={`Based on HLTB ${remainingTime.targetLabel}`}
                                 >
                                   {formatRemainingTime(
@@ -1133,7 +1133,7 @@ export default async function ProfilePage({
                                 </span>
                               ) : null}
                               {entry.lastPlayedAt ? (
-                                <span className="text-[0.65rem] text-paper/75">
+                                <span className="text-chip text-surface/75">
                                   {formatLastPlayed(
                                     entry.lastPlayedAt,
                                     entry.completionPercent,
@@ -1141,14 +1141,14 @@ export default async function ProfilePage({
                                 </span>
                               ) : null}
                               {entry.completionPercent != null ? (
-                                <span className="flex items-center gap-1 text-[0.65rem] text-paper/75">
+                                <span className="flex items-center gap-1 text-chip text-surface/75">
                                   {entry.completionPercent}% achievements
                                   {entry.provider === "STEAM" ? (
                                     <SteamCompletionInfoIcon />
                                   ) : null}
                                 </span>
                               ) : entry.provider === "STEAM" ? (
-                                <span className="flex items-center gap-1 text-[0.65rem] text-paper/75">
+                                <span className="flex items-center gap-1 text-chip text-surface/75">
                                   Not tracked
                                   <SteamCompletionInfoIcon />
                                 </span>
@@ -1163,10 +1163,10 @@ export default async function ProfilePage({
                           <button
                             type="submit"
                             className={cn(
-                              "grid h-8 w-8 cursor-pointer place-items-center rounded-full shadow-hard-xs backdrop-blur-sm transition-colors",
+                              "grid h-8 w-8 cursor-pointer place-items-center rounded-full shadow-rest backdrop-blur-sm transition-colors",
                               entry.isFavorite
-                                ? "bg-peach text-paper opacity-100!"
-                                : "bg-ink/35 text-paper hover:bg-peach/85",
+                                ? "bg-clay text-surface opacity-100!"
+                                : "bg-ink/35 text-surface hover:bg-clay/85",
                             )}
                             aria-label={
                               entry.isFavorite

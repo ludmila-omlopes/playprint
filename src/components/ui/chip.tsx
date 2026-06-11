@@ -12,17 +12,17 @@ export function Chip({
   children: ReactNode;
 }) {
   const tones = {
-    neutral: "bg-bg text-ink-soft",
+    neutral: "bg-canvas text-ink-soft",
     sage: "bg-sage-soft text-ink",
-    blue: "bg-blue-soft text-ink",
+    blue: "bg-sky-soft text-ink",
     sand: "bg-sand-soft text-ink",
-    lavender: "bg-lavender-soft text-ink",
+    lavender: "bg-dusk-lavender-soft text-ink",
   } as const;
 
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.7rem] font-bold tracking-wide",
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-caption font-bold tracking-wide",
         tones[tone],
         className,
       )}

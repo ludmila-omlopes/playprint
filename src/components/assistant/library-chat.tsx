@@ -49,7 +49,7 @@ export function LibraryChat({ aiConfigured }: { aiConfigured: boolean }) {
     <section className="panel">
       <div className="mb-6">
         <span className="section-label">Library chat</span>
-        <h2 className="text-[clamp(1.35rem,2.6vw,1.9rem)] leading-snug">
+        <h2 className="text-section-title leading-snug">
           Ask your collection anything
         </h2>
         <p className="mt-1.5 max-w-[56ch] text-sm leading-relaxed text-ink-soft">
@@ -69,7 +69,7 @@ export function LibraryChat({ aiConfigured }: { aiConfigured: boolean }) {
       ) : (
         <div className="grid gap-3.5">
           <div
-            className="max-h-[420px] min-h-[120px] overflow-y-auto rounded-card border border-edge bg-bg/60 p-4"
+            className="max-h-[420px] min-h-[120px] overflow-y-auto rounded-card border border-edge bg-canvas/60 p-4"
             ref={scrollRef}
           >
             {messages.length === 0 ? (
@@ -80,7 +80,7 @@ export function LibraryChat({ aiConfigured }: { aiConfigured: boolean }) {
                 <div className="flex flex-wrap gap-2">
                   {STARTER_PROMPTS.map((prompt) => (
                     <button
-                      className="cursor-pointer rounded-pill border border-edge bg-paper px-3.5 py-1.5 text-left text-xs font-semibold transition-all hover:-translate-y-0.5 hover:bg-blue-soft hover:shadow-hard-xs"
+                      className="cursor-pointer rounded-pill border border-edge bg-surface px-3.5 py-1.5 text-left text-xs font-semibold transition-all hover:-translate-y-0.5 hover:bg-sky-soft hover:shadow-rest"
                       key={prompt}
                       onClick={() => submitPrompt(prompt)}
                       type="button"
@@ -95,10 +95,10 @@ export function LibraryChat({ aiConfigured }: { aiConfigured: boolean }) {
                 {messages.map((message) => (
                   <div
                     className={cn(
-                      "max-w-[85%] rounded-inner px-4 py-2.5 text-sm leading-relaxed shadow-hard-xs",
+                      "max-w-[85%] rounded-inner px-4 py-2.5 text-sm leading-relaxed shadow-rest",
                       message.role === "user"
                         ? "justify-self-end bg-sage-soft"
-                        : "justify-self-start bg-paper",
+                        : "justify-self-start bg-surface",
                     )}
                     key={message.id}
                   >
@@ -106,7 +106,7 @@ export function LibraryChat({ aiConfigured }: { aiConfigured: boolean }) {
                       if (part.type === "text") {
                         return (
                           <div
-                            className="grid gap-2 [&_li]:ml-4 [&_ol]:list-decimal [&_ul]:list-disc [&_a]:underline [&_code]:rounded-[6px] [&_code]:bg-bg [&_code]:px-1 [&_code]:font-mono [&_code]:text-[0.85em] [&_h1]:font-bold [&_h2]:font-bold [&_h3]:font-bold"
+                            className="grid gap-2 [&_li]:ml-4 [&_ol]:list-decimal [&_ul]:list-disc [&_a]:underline [&_code]:rounded-[6px] [&_code]:bg-canvas [&_code]:px-1 [&_code]:font-mono [&_code]:text-[0.85em] [&_h1]:font-bold [&_h2]:font-bold [&_h3]:font-bold"
                             key={index}
                           >
                             <Markdown>{part.text}</Markdown>
@@ -118,7 +118,7 @@ export function LibraryChat({ aiConfigured }: { aiConfigured: boolean }) {
                       if (toolLabel) {
                         return (
                           <span
-                            className="mb-1 mr-1 inline-block rounded-pill bg-blue-soft px-2 py-0.5 text-[0.64rem] font-bold tracking-wide text-ink-soft"
+                            className="mb-1 mr-1 inline-block rounded-pill bg-sky-soft px-2 py-0.5 text-[0.64rem] font-bold tracking-wide text-ink-soft"
                             key={index}
                           >
                             {toolLabel}
@@ -157,7 +157,7 @@ export function LibraryChat({ aiConfigured }: { aiConfigured: boolean }) {
             }}
           >
             <input
-              className="min-h-11 flex-1 rounded-pill border border-edge bg-paper px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime focus-visible:ring-offset-2"
+              className="min-h-11 flex-1 rounded-pill border border-edge bg-surface px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2"
               disabled={busy}
               onChange={(event) => setInput(event.target.value)}
               placeholder="Ask about your games, taste, or what to play next"

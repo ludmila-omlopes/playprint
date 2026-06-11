@@ -62,19 +62,19 @@ export default async function Home() {
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute -bottom-48 right-[18%] h-[420px] w-[420px] rounded-full bg-lime/15 blur-[110px] animate-breathe [animation-delay:-4.5s]"
+          className="pointer-events-none absolute -bottom-48 right-[18%] h-[420px] w-[420px] rounded-full bg-sage/15 blur-[110px] animate-breathe [animation-delay:-4.5s]"
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute right-[-90px] top-[-60px] h-[300px] w-[300px] rounded-full bg-cyan/10 blur-[90px]"
+          className="pointer-events-none absolute right-[-90px] top-[-60px] h-[300px] w-[300px] rounded-full bg-sky/10 blur-[90px]"
         />
 
         <div className="relative z-10 grid grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)] items-center gap-12 px-14 py-20 max-lg:grid-cols-1 max-lg:gap-14 max-md:px-7 max-md:py-12">
           <div className="flex min-w-0 flex-col items-start gap-7">
-            <p className="text-[0.78rem] font-bold uppercase tracking-[0.28em] text-glow/90">
+            <p className="text-kicker font-bold uppercase tracking-[0.28em] text-glow/90">
               For players with too many games
             </p>
-            <h1 className="text-[clamp(2.6rem,6vw,4.4rem)] font-normal leading-[1.04] tracking-[-0.015em]">
+            <h1 className="text-display font-normal leading-[1.04] tracking-[-0.015em]">
               Stop fighting
               <br />
               your backlog.
@@ -114,7 +114,7 @@ export default async function Home() {
 
       {/* ═══ An evening with filazo — editorial steps ═══ */}
       <section className="relative grid gap-2 px-4">
-        <p className="text-center text-[0.78rem] font-bold uppercase tracking-[0.28em] text-ink-soft">
+        <p className="text-center text-kicker font-bold uppercase tracking-[0.28em] text-ink-soft">
           An evening with filazo
         </p>
 
@@ -147,7 +147,7 @@ export default async function Home() {
         >
           breathe
         </span>
-        <blockquote className="relative mx-auto max-w-[24ch] font-display text-[clamp(1.7rem,3.6vw,2.6rem)] font-normal italic leading-snug">
+        <blockquote className="relative mx-auto max-w-[24ch] font-display text-quote font-normal italic leading-snug">
           “A backlog is a library,
           <br />
           not a debt.”
@@ -219,7 +219,7 @@ function TonightStack() {
           <PickCover />
         </div>
         <div className="px-2 pb-2 pt-3">
-          <p className="text-[0.62rem] font-bold uppercase tracking-[0.22em] text-dusk-mist">
+          <p className="text-micro font-bold uppercase tracking-[0.22em] text-dusk-mist">
             Tonight&apos;s gentle pick
           </p>
           <p className="mt-1 font-display text-xl">Neon Drift</p>
@@ -242,9 +242,9 @@ function PickCover() {
     >
       <rect width="250" height="150" fill="var(--color-dusk)" />
       <circle cx="190" cy="42" r="22" fill="var(--color-glow)" opacity="0.9" />
-      <path d="M0 150 L62 88 L115 150 Z" fill="var(--color-lime)" opacity="0.5" />
-      <path d="M70 150 L148 70 L226 150 Z" fill="var(--color-lime)" opacity="0.75" />
-      <path d="M170 150 L228 100 L250 150 Z" fill="var(--color-cyan)" opacity="0.55" />
+      <path d="M0 150 L62 88 L115 150 Z" fill="var(--color-sage)" opacity="0.5" />
+      <path d="M70 150 L148 70 L226 150 Z" fill="var(--color-sage)" opacity="0.75" />
+      <path d="M170 150 L228 100 L250 150 Z" fill="var(--color-sky)" opacity="0.55" />
     </svg>
   );
 }
@@ -283,7 +283,7 @@ function EveningStep({
             : "col-start-1 pr-14 max-md:pr-0"
         }`}
       >
-        <span className="font-display text-[clamp(3rem,7vw,4.6rem)] font-normal italic leading-none text-lime/70">
+        <span className="font-display text-[clamp(3rem,7vw,4.6rem)] font-normal italic leading-none text-sage/70">
           {number}
         </span>
         <div className="pt-2">

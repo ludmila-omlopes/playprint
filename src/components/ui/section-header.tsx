@@ -19,7 +19,7 @@ export function SectionHeader({
     <div className="mb-6 flex items-end justify-between gap-4 max-lg:flex-col max-lg:items-start">
       <div className="min-w-0">
         {eyebrow ? <span className="section-label">{eyebrow}</span> : null}
-        <h2 className="text-[clamp(1.35rem,2.6vw,1.9rem)] leading-snug">
+        <h2 className="text-section-title leading-snug">
           {title}
         </h2>
         {description ? (
