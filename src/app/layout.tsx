@@ -11,6 +11,8 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import "./globals.css";
 import { SignOutForm } from "@/components/sign-out-form";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeaderFrame } from "@/components/site-header-frame";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
@@ -69,7 +71,7 @@ export default async function RootLayout({
         </Button>
 
         <div className="min-h-screen px-6 pb-6 max-md:px-4 max-md:pb-4">
-          <header className="mx-auto flex w-full max-w-[1100px] items-center justify-between gap-4 py-5 max-sm:flex-col max-sm:gap-3">
+          <SiteHeaderFrame>
             <Link href="/" className="group inline-flex items-baseline gap-2">
               <span className="font-display text-[1.45rem] font-medium tracking-tight">
                 filazo
@@ -80,7 +82,10 @@ export default async function RootLayout({
               />
             </Link>
 
-            <nav className="flex flex-wrap items-center gap-6" aria-label="Main">
+            <nav
+              className="flex flex-wrap items-center justify-end gap-6 max-sm:justify-start"
+              aria-label="Main"
+            >
               <Link href="/" className="nav-link text-sm">
                 Home
               </Link>
@@ -101,8 +106,9 @@ export default async function RootLayout({
                 </Button>
               )}
             </nav>
-          </header>
+          </SiteHeaderFrame>
           {children}
+          <SiteFooter />
         </div>
       </body>
     </html>
