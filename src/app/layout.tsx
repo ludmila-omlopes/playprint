@@ -92,6 +92,9 @@ export default async function RootLayout({
               <Link href="/profile" className="nav-link text-sm">
                 Library
               </Link>
+              <Link href="/tonight" className="nav-link text-sm">
+                Tonight
+              </Link>
               <ThemeToggle theme={theme} />
               {navigationUser ? (
                 <div className="inline-flex items-center gap-3">

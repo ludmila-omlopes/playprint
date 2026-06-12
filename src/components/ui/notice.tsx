@@ -23,7 +23,7 @@ export function Notice({
     <div
       aria-live="polite"
       className={cn(
-        "flex items-start gap-3 rounded-inner border border-edge px-5 py-4 text-sm font-semibold leading-relaxed shadow-rest animate-slide-in",
+        "flex items-start gap-3 rounded-inner border border-edge px-5 py-4 text-sm font-semibold leading-relaxed shadow-rest",
         tones[tone],
         className,
       )}

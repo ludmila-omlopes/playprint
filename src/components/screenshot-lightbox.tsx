@@ -99,7 +99,7 @@ export function ScreenshotLightbox({
       {/* Lightbox modal */}
       {isOpen ? (
         <div
-          className="fixed inset-0 z-50 grid place-items-center bg-ink/90 backdrop-blur-md animate-[fade-in_150ms_ease-out]"
+          className="fixed inset-0 z-50 grid place-items-center bg-ink/90 backdrop-blur-md motion-safe:animate-[fade-in_150ms_ease-out]"
           onClick={(e) => {
             if (e.target === e.currentTarget) close();
           }}
@@ -185,7 +185,7 @@ export function ScreenshotLightbox({
             <img
               alt={`Screenshot ${openIndex! + 1} of ${gameName}`}
               src={screenshots[openIndex!]}
-              className="max-w-full max-h-[85vh] object-contain rounded-[12px] shadow-[0_20px_80px_rgba(0,0,0,0.5)] animate-[scale-in_200ms_ease-out]"
+              className="max-w-full max-h-[85vh] object-contain rounded-[12px] shadow-float motion-safe:animate-[scale-in_200ms_ease-out]"
             />
           </div>
 

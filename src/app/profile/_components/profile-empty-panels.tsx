@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ControllerIllustration } from "@/components/illustrations";
 import { Button } from "@/components/ui/button";
 import { getDatabaseErrorMessage } from "@/lib/database-errors";
 import { isXboxConfigured } from "@/lib/xbox";
@@ -7,6 +8,9 @@ export function SignedOutPanel() {
   return (
     <main id="main-content" className="mx-auto w-full max-w-[760px]">
       <section className="panel p-10 text-center">
+        <div className="mx-auto mb-5 grid h-20 w-20 place-items-center rounded-inner border border-edge bg-canvas text-ink-soft">
+          <ControllerIllustration className="h-14 w-14" />
+        </div>
         <p className="section-label justify-center">Your library</p>
         <h1 className="mb-3 text-page-title leading-snug">
           Connect an account to begin.
