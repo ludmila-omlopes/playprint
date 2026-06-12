@@ -17,7 +17,7 @@ Use warm surfaces, diffuse shadows, tactile rounded objects, and clear organizat
 | `--color-canvas` | `#faf7f1` | Page background and broad quiet areas. |
 | `--color-surface` | `#fffdf9` | Cards, panels, controls, and paper-like objects. |
 | `--color-ink` | `#3f443c` | Primary text and strong UI fills. |
-| `--color-ink-soft` | `#6f7468` | Secondary text, labels, helper copy. |
+| `--color-ink-soft` | `#6e7367` | Secondary text, labels, helper copy. |
 | `--color-edge` | `#e9e2d4` | Hairline borders and soft separators. |
 
 ## Accent Hues

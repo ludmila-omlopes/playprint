@@ -8,7 +8,7 @@
   --color-canvas: #faf7f1;
   --color-surface: #fffdf9;
   --color-ink: #3f443c;
-  --color-ink-soft: #6f7468;
+  --color-ink-soft: #6e7367;
   --color-edge: #e9e2d4;
 
   /* Accent hues */
@@ -277,21 +277,45 @@
   }
 }
 
+@keyframes soft-pulse {
+  0%,
+  100% {
+    opacity: 0.62;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 /* ── Custom utilities ── */
 @utility animate-slide-in {
-  animation: slide-in-top 0.4s ease-out;
+  @media (prefers-reduced-motion: no-preference) {
+    animation: slide-in-top 0.4s ease-out;
+  }
 }
 
 @utility animate-drift {
-  animation: drift 7s ease-in-out infinite;
+  @media (prefers-reduced-motion: no-preference) {
+    animation: drift 7s ease-in-out infinite;
+  }
 }
 
 @utility animate-breathe {
-  animation: breathe 9s ease-in-out infinite;
+  @media (prefers-reduced-motion: no-preference) {
+    animation: breathe 9s ease-in-out infinite;
+  }
 }
 
 @utility animate-drift-slow {
-  animation: drift-slow 8s ease-in-out infinite;
+  @media (prefers-reduced-motion: no-preference) {
+    animation: drift-slow 8s ease-in-out infinite;
+  }
+}
+
+@utility animate-soft-pulse {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: soft-pulse 1.8s ease-in-out infinite;
+  }
 }
 
 /* Editorial serif accent — italic Fraunces for emotional emphasis */

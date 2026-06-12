@@ -156,6 +156,14 @@ export default async function Home() {
                 size="lg"
                 className="h-12 rounded-full border border-cream/25 px-7 text-base font-semibold text-cream hover:bg-cream/10 hover:text-cream"
               >
+                <Link href="/tonight">Open tonight</Link>
+              </Button>
+              <Button
+                asChild
+                variant="ghost"
+                size="lg"
+                className="h-12 rounded-full border border-cream/15 px-7 text-base font-semibold text-cream/80 hover:bg-cream/10 hover:text-cream"
+              >
                 <Link href="/profile">Bring a CSV instead</Link>
               </Button>
             </div>

@@ -5,6 +5,7 @@ import { PlayNextPanel } from "@/components/assistant/play-next-panel";
 import { PlayerProfilePanel } from "@/components/assistant/player-profile-panel";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/section-header";
+import Link from "next/link";
 import { formatNumber } from "@/lib/utils";
 import {
   generatePlayerProfileAction,
@@ -37,6 +38,11 @@ export function AssistantCorner({
       <SectionHeader
         eyebrow="Assistant corner"
         title="A librarian for the shelf"
+        aside={
+          <Button asChild size="sm" variant="ghost">
+            <Link href="/tonight">Open tonight</Link>
+          </Button>
+        }
       />
       <PlayerProfilePanel
         action={generatePlayerProfileAction}

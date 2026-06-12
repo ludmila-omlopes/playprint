@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { StackCasesIllustration } from "@/components/illustrations";
 
 /** Gentle empty placeholder — reassuring instead of alarming. */
 export function EmptyState({
@@ -16,7 +17,11 @@ export function EmptyState({
         <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-inner border border-edge bg-canvas text-ink-soft">
           {illustration}
         </div>
-      ) : null}
+      ) : (
+        <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-inner border border-edge bg-canvas text-ink-soft">
+          <StackCasesIllustration className="h-11 w-11" />
+        </div>
+      )}
       <p className="font-display text-lg">{title}</p>
       {children ? (
         <div className="mx-auto mt-2 max-w-[44ch] text-sm leading-relaxed text-ink-soft">
